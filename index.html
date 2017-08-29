@@ -1,0 +1,350 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Banana</title>
+</head>
+<body>
+  <script src="deps/pixi.js"></script>
+  <script src="deps/scaleToWindow.js"></script>
+
+  <script src="deps/matter.js"></script>
+
+  <script type="text/javascript">
+
+/*
+    Americans love bananas
+    In 2015, an average Americans ate 14 oranges, and 32 apples.
+    Guess how many bananas they ate?
+    -> That's right. 46 bananas, as many apples and oranges combined. 
+
+    // reference : http://www.pbhfoundation.org/pdfs/about/res/pbh_res/State_of_the_Plate_2015_WEB_Bookmarked.pdf
+
+    most bananas will die...
+    we eat so many bananas, how is this possible?
+    most fruit was changed through agriculture
+      ex. game where you pick the best species and cross them 
+      match up original fruit against their modern counterparts
+      use a slider to see how it changes over time?
+    fruit has seeds, banana is fruit, so where are the seeds?
+    in fact they are there but we take them out using hybridization
+      explain genetics of diploid / tetraploid
+      revisit previous game but with hybrid approach
+    result is it's more difficult to improve over time, and more susceptible to disease
+      return to farm game, this time disease hits
+        your polyculture plants survived (from 1st game time)
+        but your monoculture bananas die
+    this is what happened to the gros michel banana
+      similar things happened in the potato famine
+    and reports are that the panana disease is adapting to the cavendish
+    what could happen now?
+      hybrids (diffocult)
+      genetic engineering (unpopular)
+    or we embrace diversity - other bananas exist
+*/
+
+const appSize = [800, 600];
+
+const DEBUG_PHYSICS = false;
+
+class Entity {
+  setup() {}
+  update(timeSinceStart, timeScale) {}
+  teardown() {}
+}
+
+function makeSprite(name) { 
+  return new PIXI.Sprite(app.loader.resources[name].texture);
+}
+
+function randomPos() {
+  return [appSize[0] * Math.random(), appSize[1] * Math.random()];
+}
+
+
+const SPAWN_FRUIT_POS = [appSize[0] * 0.5, appSize[1] * -0.1];
+const TIME_BETWEEN_FRUIT = 250;
+
+class IntroScene extends Entity {
+  setup() {
+    this.engine = Matter.Engine.create();
+    
+    if(DEBUG_PHYSICS) {
+      var render = Matter.Render.create({
+          element: document.body,
+          engine: this.engine
+      });
+
+      Matter.Render.run(render);      
+    }
+    
+    const ground = Matter.Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+    const leftWall = Matter.Bodies.rectangle(0, appSize[1] / 2, 60, appSize[1], { isStatic: true });
+    const rightWall = Matter.Bodies.rectangle(appSize[0], appSize[1] / 2, 60, appSize[1], { isStatic: true });
+    Matter.World.add(this.engine.world, [ground, leftWall, rightWall]);
+
+    this.container = new PIXI.Container();
+    this.container.interactive = true;
+    this.container.width = app.stage.width;
+    this.container.height = app.stage.height;
+    app.stage.addChild(this.container);
+
+    let rectangle = new PIXI.Graphics();
+    //rectangle.lineStyle(4, 0xFF3300, 1);
+    rectangle.beginFill("black");
+    rectangle.drawRect(0, 0, appSize[0], appSize[1]);
+    rectangle.endFill();
+    rectangle.interactive = true;
+    rectangle.on("click", () => { this.onClick(); });
+    this.container.addChild(rectangle);
+
+    // Phases are beforeOrange, orange, beforeApple, apple, beforeBanana, banana
+    this.phase = "beforeOrange";
+    this.orangeCount = 0;
+    this.appleCount = 0;
+    this.bananaCount = 0;
+    this.lastFruitTime = 0;
+
+    // Matching arrays of bodies and their sprites
+    this.bodies = [];
+    this.sprites = [];
+
+    changeSubtitle("In 2015, an average Americans ate 14 oranges");
+
+  }
+
+  randomDropPos() {
+    return [(0.1 + 0.8 * Math.random()) * appSize[0], appSize[1] * -0.1];
+  }
+
+  update(timeSinceStart, timeScale) {
+    switch(this.phase) {
+      case "orange":
+        if(this.orangeCount > 14) {
+          this.phase = "beforeApple";
+        } else if(this.lastFruitTime + TIME_BETWEEN_FRUIT < timeSinceStart) {
+          this.makeOrange(this.randomDropPos());
+          this.orangeCount++;
+          this.lastFruitTime = timeSinceStart;
+        }
+        break;
+
+      case "apple":
+        if(this.appleCount > 32) {
+          this.phase = "beforeBanana";
+        } else if(this.lastFruitTime + TIME_BETWEEN_FRUIT < timeSinceStart) {
+          this.makeApple(this.randomDropPos());
+          this.appleCount++;
+          this.lastFruitTime = timeSinceStart;
+        }
+        break;
+
+      case "banana":
+        if(this.bananaCount > 46) {
+          this.phase = "done";
+        } else if(this.lastFruitTime + TIME_BETWEEN_FRUIT < timeSinceStart) {
+          this.makeBanana(this.randomDropPos());
+          this.bananaCount++;
+          this.lastFruitTime = timeSinceStart;
+        }
+        break;
+    }
+
+    Matter.Engine.update(this.engine, timeScale * 1000 / 60);
+
+    for(let i = 0; i < this.bodies.length; i++)
+    {
+      const sprite = this.sprites[i];
+      const body = this.bodies[i];
+      sprite.position.set(body.position.x, body.position.y);
+      sprite.rotation = body.angle;
+    }
+  }
+
+  onClick(e) {
+    switch(this.phase) {
+      case "beforeOrange":
+        this.phase = "orange";
+        break;
+
+      case "beforeApple":
+        this.phase = "apple";
+        break;
+
+      case "beforeBanana":
+        this.phase = "banana";
+        break;
+    }
+  }
+
+  teardown() {
+    app.stage.removeChild(this.container);
+  }
+
+  makeOrange(pos) { 
+    const sprite = makeSprite("images/orange.png");
+    sprite.scale.set(0.125);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.position.set(pos[0], pos[1]);
+    this.container.addChild(sprite);
+
+    const body = Matter.Bodies.circle(pos[0], pos[1], 28);
+    Matter.World.addBody(this.engine.world, body);
+    this.sprites.push(sprite);
+    this.bodies.push(body);
+
+    return sprite;
+  }
+
+  makeApple(pos) { 
+    const sprite = makeSprite("images/apple.png");
+    sprite.scale.set(0.125);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.position.set(pos[0], pos[1]);
+    this.container.addChild(sprite);
+
+    const body = Matter.Bodies.circle(pos[0], pos[1], 28);
+    Matter.World.addBody(this.engine.world, body);
+    this.sprites.push(sprite);
+    this.bodies.push(body);
+
+    return sprite;
+  }
+
+  makeBanana(pos) { 
+    const sprite = makeSprite("images/banana.png");
+    sprite.scale.set(0.05);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.position.set(pos[0], pos[1]);
+    this.container.addChild(sprite);
+
+    const body = Matter.Bodies.rectangle(pos[0], pos[1], 80, 40);
+    Matter.World.addBody(this.engine.world, body);
+    this.sprites.push(sprite);
+    this.bodies.push(body);
+
+    return sprite;
+  }
+}
+
+
+
+const app = new PIXI.Application();
+document.body.appendChild(app.view);
+
+app.loader
+  .add("images/apple.png")
+  .add("images/orange.png")
+  .add("images/banana.png")
+  .on("progress", loadProgressHandler)
+  .load(setup);
+
+
+// Scale canvas on 
+scaleToWindow(app.view);
+
+window.addEventListener("resize", function(event){ 
+  scaleToWindow(app.view);
+});
+
+// Doesn't work on fullscreen
+
+//document.addEventListener("fullscreenchange", function( event ) { scaleToWindow(app.view); });
+
+// var requestFullScreen = document.documentElement.requestFullscreen || 
+//   document.documentElement.mozRequestFullScreen || 
+//   document.documentElement.webkitRequestFullscreen ||
+//   document.documentElement.msRequestFullscreen;
+
+function requestFullScreen(element) {
+  if(element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if(element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if(element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if(element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
+}
+
+function loadProgressHandler(loader, resource) {
+  //Display the file `url` currently being loaded
+  console.log("loading: " + resource.url); 
+
+  //Display the precentage of files currently loaded
+  console.log("progress: " + loader.progress + "%"); 
+
+  //If you gave your files names as the first argument 
+  //of the `add` method, you can access them like this
+  //console.log("loading: " + resource.name);
+}
+
+//let banana;
+let subtitle;
+
+function setup() {
+  /*banana = new PIXI.Sprite(
+    app.loader.resources["images/banana.png"].texture
+  );*/
+
+  subtitle = new PIXI.Text("In less than 20 years ...", {
+    fontFamily: "Arial", 
+    fontSize: 32, 
+    fill: "white",
+    align: "center"
+  });
+
+  subtitle.anchor.set(0.5, 0.5);
+
+  subtitle.position.set(app.renderer.width / 2, app.renderer.height - 100);
+  app.stage.addChild(subtitle); 
+
+
+  app.ticker.add(update);
+
+  // Start scene
+  changeScene(new IntroScene());
+}
+
+let currentScene;
+let sceneStartedAt = 0;
+
+function changeScene(newScene) {
+  if(currentScene) currentScene.teardown();
+
+  newScene.setup();
+  currentScene = newScene;
+  sceneStartedAt = Date.now();
+}
+
+function update(timeScale)
+{
+  //subtitle.text = "scientists believe that bananas will be gone";
+
+  currentScene.update(Date.now() - sceneStartedAt, timeScale);
+
+  app.renderer.render(app.stage);
+}
+
+function changeSubtitle(text) {
+  subtitle.text = text;
+}
+
+/* TODO
+
+scene = { setup(), teardown(), update(timeScale) }
+// access direct to app.view
+
+subtitles = load file with ID: text li"ne
+one file per language
+
+audio: one long track, with exported markers on IDs to start times and lengths
+
+*/
+
+
+
+  </script>
+</body>
+</html>
