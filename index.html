@@ -62,9 +62,6 @@ function randomPos() {
 }
 
 
-const SPAWN_FRUIT_POS = [appSize[0] * 0.5, appSize[1] * -0.1];
-const TIME_BETWEEN_FRUIT = 250;
-
 class IntroScene extends Entity {
   setup() {
     this.engine = Matter.Engine.create();
@@ -85,9 +82,9 @@ class IntroScene extends Entity {
 
     this.container = new PIXI.Container();
     this.container.interactive = true;
-    this.container.width = app.stage.width;
-    this.container.height = app.stage.height;
-    app.stage.addChild(this.container);
+    this.container.width = appSize[0];
+    this.container.height = appSize[1];
+    sceneLayer.addChild(this.container);
 
     let rectangle = new PIXI.Graphics();
     //rectangle.lineStyle(4, 0xFF3300, 1);
@@ -109,8 +106,7 @@ class IntroScene extends Entity {
     this.bodies = [];
     this.sprites = [];
 
-    changeSubtitle("In 2015, an average Americans ate 14 oranges");
-
+    changeSubtitle("In 2015, an average Americans ate");
   }
 
   randomDropPos() {
@@ -122,7 +118,7 @@ class IntroScene extends Entity {
       case "orange":
         if(this.orangeCount > 14) {
           this.phase = "beforeApple";
-        } else if(this.lastFruitTime + TIME_BETWEEN_FRUIT < timeSinceStart) {
+        } else if(this.lastFruitTime + 500 < timeSinceStart) {
           this.makeOrange(this.randomDropPos());
           this.orangeCount++;
           this.lastFruitTime = timeSinceStart;
@@ -132,7 +128,7 @@ class IntroScene extends Entity {
       case "apple":
         if(this.appleCount > 32) {
           this.phase = "beforeBanana";
-        } else if(this.lastFruitTime + TIME_BETWEEN_FRUIT < timeSinceStart) {
+        } else if(this.lastFruitTime + 400 < timeSinceStart) {
           this.makeApple(this.randomDropPos());
           this.appleCount++;
           this.lastFruitTime = timeSinceStart;
@@ -142,7 +138,7 @@ class IntroScene extends Entity {
       case "banana":
         if(this.bananaCount > 46) {
           this.phase = "done";
-        } else if(this.lastFruitTime + TIME_BETWEEN_FRUIT < timeSinceStart) {
+        } else if(this.lastFruitTime + 250 < timeSinceStart) {
           this.makeBanana(this.randomDropPos());
           this.bananaCount++;
           this.lastFruitTime = timeSinceStart;
@@ -165,20 +161,26 @@ class IntroScene extends Entity {
     switch(this.phase) {
       case "beforeOrange":
         this.phase = "orange";
+
+        changeSubtitle("14 oranges");
         break;
 
       case "beforeApple":
         this.phase = "apple";
+
+        changeSubtitle("and 32 apples");
         break;
 
       case "beforeBanana":
         this.phase = "banana";
+
+        changeSubtitle("and 46 bananas, as many apples and oranges combined");
         break;
     }
   }
 
   teardown() {
-    app.stage.removeChild(this.container);
+    sceneLayer.removeChild(this.container);
   }
 
   makeOrange(pos) { 
@@ -280,7 +282,7 @@ function loadProgressHandler(loader, resource) {
   //console.log("loading: " + resource.name);
 }
 
-//let banana;
+let sceneLayer;
 let subtitle;
 
 function setup() {
@@ -288,11 +290,17 @@ function setup() {
     app.loader.resources["images/banana.png"].texture
   );*/
 
-  subtitle = new PIXI.Text("In less than 20 years ...", {
+  sceneLayer = new PIXI.Container();
+  app.stage.addChild(sceneLayer);
+
+  subtitle = new PIXI.Text("", {
     fontFamily: "Arial", 
     fontSize: 32, 
     fill: "white",
-    align: "center"
+    strokeThickness: 4,
+    align: "center",
+    wordWrap: true,
+    wordWrapWidth: appSize[0]
   });
 
   subtitle.anchor.set(0.5, 0.5);
