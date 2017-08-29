@@ -51,6 +51,7 @@ class Entity {
   setup() {}
   update(timeSinceStart, timeScale) {}
   teardown() {}
+  requestedTransition() { return null; } // Provide string transition name, such as "next"
 }
 
 function makeSprite(name) { 
@@ -61,6 +62,11 @@ function randomPos() {
   return [appSize[0] * Math.random(), appSize[1] * Math.random()];
 }
 
+function distanceBetweenPixiPoints(a, b) {
+  let x = a.x - b.x;
+  let y = a.y - b.y;
+  return Math.sqrt(x*x + y*y);
+}
 
 class IntroScene extends Entity {
   setup() {
@@ -92,10 +98,11 @@ class IntroScene extends Entity {
     rectangle.drawRect(0, 0, appSize[0], appSize[1]);
     rectangle.endFill();
     rectangle.interactive = true;
-    rectangle.on("click", () => { this.onClick(); });
+    rectangle.on("click", () => { this.onClick(); }); // TODO: use bind() instead?
+    rectangle.on("pointermove", (e) => { this.onMove(e); })
     this.container.addChild(rectangle);
 
-    // Phases are beforeOrange, orange, beforeApple, apple, beforeBanana, banana
+    // Phases are beforeOrange, orange, beforeApple, apple, beforeBanana, banana, eat, outro, done
     this.phase = "beforeOrange";
     this.orangeCount = 0;
     this.appleCount = 0;
@@ -106,7 +113,7 @@ class IntroScene extends Entity {
     this.bodies = [];
     this.sprites = [];
 
-    changeSubtitle("In 2015, an average Americans ate");
+    changeSubtitle("Americans love bananas.\nIn 2015, an average Americans ate");
   }
 
   randomDropPos() {
@@ -128,7 +135,7 @@ class IntroScene extends Entity {
       case "apple":
         if(this.appleCount > 32) {
           this.phase = "beforeBanana";
-        } else if(this.lastFruitTime + 400 < timeSinceStart) {
+        } else if(this.lastFruitTime + 300 < timeSinceStart) {
           this.makeApple(this.randomDropPos());
           this.appleCount++;
           this.lastFruitTime = timeSinceStart;
@@ -137,11 +144,41 @@ class IntroScene extends Entity {
 
       case "banana":
         if(this.bananaCount > 46) {
-          this.phase = "done";
-        } else if(this.lastFruitTime + 250 < timeSinceStart) {
+          this.phase = "eat";
+
+          this.makeMouth();
+          changeSubtitle("And yet, scientists say that soon, most bananas will be completely gone")
+        } else if(this.lastFruitTime + 200 < timeSinceStart) {
           this.makeBanana(this.randomDropPos());
           this.bananaCount++;
           this.lastFruitTime = timeSinceStart;
+        }
+        break;
+
+      case "eat":
+        if(this.sprites.length == this.appleCount + this.orangeCount)
+        {
+          this.phase = "outro";
+          changeSubtitle("How could that be possible?")
+        }
+        else
+        {
+          // look for the first sprite that is within the mouth size and remove it
+          let foundSprite = false;
+          for(let i = this.appleCount + this.orangeCount; !foundSprite && i < this.sprites.length; i++) {
+            if(distanceBetweenPixiPoints(this.sprites[i].position, this.mouth.position) < 75)
+            {
+              // Remove graphics
+              this.container.removeChild(this.sprites[i]);
+              this.sprites.splice(i, 1);
+
+              // Remove physics
+              Matter.World.remove(this.engine.world, this.bodies[i]);
+              this.bodies.splice(i, 1);
+
+              foundSprite = true;
+            } 
+          }
         }
         break;
     }
@@ -156,6 +193,8 @@ class IntroScene extends Entity {
       sprite.rotation = body.angle;
     }
   }
+
+  requestedTransition() { return this.phase == "done" ? "next" : null; }
 
   onClick(e) {
     switch(this.phase) {
@@ -174,7 +213,19 @@ class IntroScene extends Entity {
       case "beforeBanana":
         this.phase = "banana";
 
-        changeSubtitle("and 46 bananas, as many apples and oranges combined");
+        changeSubtitle("but a whopping 46 bananas,\n as many apples and oranges combined");
+        break;
+
+      case "outro":
+        this.phase = "done";
+        break
+    }
+  }
+
+  onMove(e) {
+    switch(this.phase) {
+      case "eat":
+        this.mouth.position = e.data.getLocalPosition(app.stage);
         break;
     }
   }
@@ -226,6 +277,15 @@ class IntroScene extends Entity {
     this.bodies.push(body);
 
     return sprite;
+  }
+
+  makeMouth() {
+    this.mouth = new PIXI.Graphics();
+    this.mouth.lineStyle(4, 0xFFFFFF, 1);
+    this.mouth.beginFill("green");
+    this.mouth.drawCircle(0, 0, 75);
+    this.mouth.endFill();
+    this.container.addChild(this.mouth);
   }
 }
 
@@ -286,10 +346,6 @@ let sceneLayer;
 let subtitle;
 
 function setup() {
-  /*banana = new PIXI.Sprite(
-    app.loader.resources["images/banana.png"].texture
-  );*/
-
   sceneLayer = new PIXI.Container();
   app.stage.addChild(sceneLayer);
 
