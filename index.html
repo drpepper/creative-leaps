@@ -13,6 +13,10 @@
   <script type="text/javascript">
 
 /*
+  TODO: 
+    - sound effects
+
+  SCRIPT
     Americans love bananas
     In 2015, an average Americans ate 14 oranges, and 32 apples.
     Guess how many bananas they ate?
@@ -22,10 +26,21 @@
 
     most bananas will die...
     we eat so many bananas, how is this possible?
+    show logo?
+    what are fruit?
+      fruit are a way for plants to get animals to spread their seeds - "say you're a plant and you want to spread your seeds"
+      there are other ways to spread seeds of course: wind and water
+      but fruit takes advantage of animals, which bring the seeds far and wide, and deposit them in "fertaliser"
+      trick is:
+        fruit must be tasty (e.g. lots of sugar)
+        that seeds must be tough enough to survive digestion
+          (in fact there are fruit that have really big seeds that no animals eat anymore)
+
     most fruit was changed through agriculture
       ex. game where you pick the best species and cross them 
       match up original fruit against their modern counterparts
       use a slider to see how it changes over time?
+
     fruit has seeds, banana is fruit, so where are the seeds?
     in fact they are there but we take them out using hybridization
       explain genetics of diploid / tetraploid
@@ -41,6 +56,13 @@
       hybrids (diffocult)
       genetic engineering (unpopular)
     or we embrace diversity - other bananas exist
+
+
+  NOTES
+    recent study links larger brains in primates to those who eat fruit rather than leaves
+
+
+
 */
 
 const appSize = [800, 600];
@@ -51,7 +73,7 @@ class Entity {
   setup() {}
   update(timeSinceStart, timeScale) {}
   teardown() {}
-  requestedTransition() { return null; } // Provide string transition name, such as "next"
+  requestedTransition(timeSinceStart) { return null; } // Provide string transition name, such as "next"
 }
 
 function makeSprite(name) { 
@@ -60,6 +82,10 @@ function makeSprite(name) { 
 
 function randomPos() {
   return [appSize[0] * Math.random(), appSize[1] * Math.random()];
+}
+
+function clamp(x, min, max) {
+  return Math.min(max, Math.max(min, x));
 }
 
 function distanceBetweenPixiPoints(a, b) {
@@ -98,7 +124,7 @@ class IntroScene extends Entity {
     rectangle.drawRect(0, 0, appSize[0], appSize[1]);
     rectangle.endFill();
     rectangle.interactive = true;
-    rectangle.on("click", () => { this.onClick(); }); // TODO: use bind() instead?
+    rectangle.on("pointertap", () => { this.onClick(); }); // TODO: use bind() instead?
     rectangle.on("pointermove", (e) => { this.onMove(e); })
     this.container.addChild(rectangle);
 
@@ -123,7 +149,7 @@ class IntroScene extends Entity {
   update(timeSinceStart, timeScale) {
     switch(this.phase) {
       case "orange":
-        if(this.orangeCount > 14) {
+        if(this.orangeCount >= 14) {
           this.phase = "beforeApple";
         } else if(this.lastFruitTime + 500 < timeSinceStart) {
           this.makeOrange(this.randomDropPos());
@@ -133,7 +159,7 @@ class IntroScene extends Entity {
         break;
 
       case "apple":
-        if(this.appleCount > 32) {
+        if(this.appleCount >= 32) {
           this.phase = "beforeBanana";
         } else if(this.lastFruitTime + 300 < timeSinceStart) {
           this.makeApple(this.randomDropPos());
@@ -143,7 +169,7 @@ class IntroScene extends Entity {
         break;
 
       case "banana":
-        if(this.bananaCount > 46) {
+        if(this.bananaCount >= 46) {
           this.phase = "eat";
 
           this.makeMouth();
@@ -159,6 +185,8 @@ class IntroScene extends Entity {
         if(this.sprites.length == this.appleCount + this.orangeCount)
         {
           this.phase = "outro";
+
+          this.container.removeChild(this.mouth);
           changeSubtitle("How could that be possible?")
         }
         else
@@ -213,7 +241,7 @@ class IntroScene extends Entity {
       case "beforeBanana":
         this.phase = "banana";
 
-        changeSubtitle("but a whopping 46 bananas,\n as many apples and oranges combined");
+        changeSubtitle("but a whopping 46 bananas, as many as all those apples and oranges combined");
         break;
 
       case "outro":
@@ -289,6 +317,62 @@ class IntroScene extends Entity {
   }
 }
 
+class LogoScene extends Entity {
+  constructor(time = 5000) {
+    super();
+    this.time = time;
+  }
+
+  setup() {
+    this.container = new PIXI.Container();
+    this.container.interactive = true;
+    this.container.width = appSize[0];
+    this.container.height = appSize[1];
+    sceneLayer.addChild(this.container);
+
+    this.logo = makeSprite("images/logo.png");
+
+    this.blurFilter = new PIXI.filters.BlurFilter();
+    this.blurFilter.blur = 0;
+
+    this.noiseFilter = new PIXI.filters.NoiseFilter();
+    this.noiseFilter.noise = 0;
+
+    this.logo.filters = [this.blurFilter, this.noiseFilter];
+    this.logo.interactive = true;
+    this.logo.on("pointermove", this.onPointerMove.bind(this))
+    this.container.addChild(this.logo);
+
+    changeSubtitle();
+  }
+
+  update(timeSinceStart, timeScale) {
+    this.noiseFilter.seed = Math.random();
+  }
+
+  requestedTransition(timeSinceStart) { return timeSinceStart > this.time  ? "next" : null; }
+
+  onPointerMove(e) {
+    const pointerPos = e.data.getLocalPosition(app.stage);
+    const xFrac = clamp(pointerPos.x / appSize[0], 0, 1); 
+    this.noiseFilter.noise = xFrac;
+    const yFrac = clamp(pointerPos.y / appSize[0], 0, 1); 
+    this.blurFilter.blur = 20 * yFrac;
+  }
+
+}
+
+function provideNextScene(currentScene, requestedTransition) {
+  switch(currentScene.constructor.name) {
+    case "IntroScene":
+      return new LogoScene();
+      break;
+
+    default:
+      console.error("No transition from", currentScene, "with transition", requestedTransition);
+      return null;
+  }
+}
 
 
 const app = new PIXI.Application();
@@ -298,6 +382,7 @@ app.loader
   .add("images/apple.png")
   .add("images/orange.png")
   .add("images/banana.png")
+  .add("images/logo.png")
   .on("progress", loadProgressHandler)
   .load(setup);
 
@@ -369,6 +454,7 @@ function setup() {
 
   // Start scene
   changeScene(new IntroScene());
+  //changeScene(new LogoScene());
 }
 
 let currentScene;
@@ -380,14 +466,19 @@ function changeScene(newScene) {
   newScene.setup();
   currentScene = newScene;
   sceneStartedAt = Date.now();
+  newScene.update(0);
 }
 
 function update(timeScale)
 {
-  //subtitle.text = "scientists believe that bananas will be gone";
+  const timeSinceStart = Date.now() - sceneStartedAt;
+  currentScene.update(timeSinceStart, timeScale);
 
-  currentScene.update(Date.now() - sceneStartedAt, timeScale);
-
+  const requestedTransition = currentScene.requestedTransition(timeSinceStart);
+  if(requestedTransition != null) {
+      const nextScene = provideNextScene(currentScene, requestedTransition);
+      if(nextScene != null) changeScene(nextScene);
+  }
   app.renderer.render(app.stage);
 }
 
@@ -396,9 +487,6 @@ function changeSubtitle(text) {
 }
 
 /* TODO
-
-scene = { setup(), teardown(), update(timeScale) }
-// access direct to app.view
 
 subtitles = load file with ID: text li"ne
 one file per language
