@@ -20,11 +20,11 @@
 
     most bananas will die...
     we eat so many bananas, how is this possible?
-    show logo?
+    show logo
     what are fruit?
       fruit are a way for plants to get animals to spread their seeds - "say you're a plant and you want to spread your seeds"
       there are other ways to spread seeds of course: wind and water
-      but fruit takes advantage of animals, which bring the seeds far and wide, and deposit them in "fertaliser"
+      but fruit takes advantage of animals, pwhich bring the seeds far and wide, and deposit them in "fertaliser"
       trick is:
         fruit must be tasty (e.g. lots of sugar)
         that seeds must be tough enough to survive digestion
@@ -68,6 +68,87 @@ class Entity {
   update(timeSinceStart, timeScale) {}
   teardown() {}
   requestedTransition(timeSinceStart) { return null; } // Provide string transition name, such as "next"
+}
+
+class StateMachine extends Entity {
+  constructor(states, transitions, startingState = "start", endingState = "end") {
+    super();
+
+    this.states = states;
+    this.transitions = transitions;
+    this.startingState = startingState;
+    this.endingState = endingState;
+  }
+
+  changeState(timeSinceStart, nextStateName) {
+    if(this.state) this.state.teardown();
+
+    this.stateName = nextStateName;
+
+    if(nextStateName in this.states) {
+      this.state = this.states[nextStateName];
+      this.state.setup();      
+    } else {
+      this.state = null;
+    }
+
+    this.sceneStartedAt = timeSinceStart;
+  }
+
+  setup() {
+    this.changeState(0, this.startingState)
+  }
+
+  update(timeSinceStart, timeScale) {
+    if(!this.state) return;
+
+    const timeSinceStateStart = timeSinceStart - this.sceneStartedAt;
+    this.state.update(timeSinceStateStart, timeScale);
+
+    const requestedTransition = this.state.requestedTransition(timeSinceStateStart);
+    if(requestedTransition != null) {
+      const nextStateName = this.transitions[this.stateName][requestedTransition];
+      if(nextStateName != null) this.changeState(timeSinceStart, nextStateName)
+    }
+  }
+
+  teardown() {
+    if(this.state) this.state.teardown();
+  }
+
+  requestedTransition(timeSinceStart) { 
+    return this.stateName == this.endingState ? "next" : null;
+  }
+}
+
+class ParallelEntities extends Entity {
+  constructor() {
+    super();
+
+    this.entities = arguments;
+  }
+
+  setup() {
+    for(const entity of this.entities) {
+      entity.setup();
+    } 
+  }
+
+  update(timeSinceStart, timeScale) {
+    for(const entity of this.entities) {
+      entity.update(timeSinceStart, timeScale);
+    }
+  } 
+
+  teardown() {
+    for(const entity of this.entities) {
+      entity.teardown();
+    }     
+  }
+
+  requestedTransition(timeSinceStart) { 
+    return this.entities[0].requestedTransition();
+  }
 }
 
 class SubtitleRunner {
@@ -115,6 +196,12 @@ function distanceBetweenPixiPoints(a, b) {
   let x = a.x - b.x;
   let y = a.y - b.y;
   return Math.sqrt(x*x + y*y);
+}
+
+function lerp(a, b, p) {
+  const x = b.x - a.x;
+  const y = b.y - a.y;
+  return new PIXI.Point(a.x + p * x, a.y + p * y);
 }
 
 class IntroScene extends Entity {
@@ -348,7 +435,7 @@ class LogoScene extends Entity {
       [5000, "from design to economics."],
       [7000, "There's a new episode every 2 weeks,"],
       [9000, "so check us out at playcurious.com,"],
-      [12000, "and download our phone app so you don't miss any."],
+      [12000, "and download our phone app so you play as soon as they come out."],
       [14000, "Now back to bananas."],
       [17000, ""],
     ]);
@@ -397,8 +484,165 @@ class LogoScene extends Entity {
     const yFrac = clamp(pointerPos.y / appSize[0], 0, 1); 
     this.blurFilter.blur = 20 * yFrac;
   }
-
 }
+
+class EatingScene extends Entity {
+  constructor() {
+    super();
+    const scene = this;
+
+    const startingSeedPos = new PIXI.Point(249, 221);
+    const endingSeedPos = new PIXI.Point(262, 446);
+    const seedFallTime = 5000;
+
+    const states = {
+      "start": new SubtitleRunner([
+        [0, "But first we need to talk about fruit."],
+        [2000, "What are fruit anyway?"],
+        [4000, "Fruit are simply a way for plants to spread their seeds."],
+        [6000, "Now, there are other ways to spread seeds."],
+        [8000, "For example, a plant could just drop them on the ground, simple as that."],
+        [10000, ""]
+      ]),
+      "seed": new class extends Entity {
+        setup() {
+          this.didTap = false;
+
+          this.seed = makeSprite("images/seed.png");
+          this.seed.anchor.set(0.5);
+          this.seed.position = startingSeedPos;
+          this.seed.interactive = true;
+          this.seed.on("pointertap", () => { this.didTap = true; });
+          scene.container.addChild(this.seed);
+        }
+
+        update(timeSinceStart, timeScale) {
+          this.seed.position = lerp(startingSeedPos, 
+            endingSeedPos, 
+            clamp(timeSinceStart / seedFallTime, 0, 1));
+        }
+
+        teardown() {
+          scene.container.removeChild(this.seed);
+        }
+
+        requestedTransition(timeSinceStart) { 
+          return this.didTap && timeSinceStart >= seedFallTime ? "next" : null; 
+        }
+      },
+      "seedling": new ParallelEntities(
+        new class extends Entity {
+          setup() {
+            this.seedling = makeSprite("images/seedling.png");
+            this.seedling.anchor.set(0.5);
+            this.seedling.position = endingSeedPos;
+            scene.container.addChild(this.seedling);
+          }
+
+          teardown() {
+            scene.container.removeChild(this.seedling);
+          }
+
+          requestedTransition(timeSinceStart) { 
+            return timeSinceStart >= 5000 ? "next" : null; 
+          }
+        },
+        new SubtitleRunner([
+          [0, "But because the seed is just next to the tree,"],
+          [2000, "the new plant will have to fight for light, nutrients, and water."],
+          [4000, ""]
+        ])
+      ),
+    };
+
+    const transitions = {
+      "start": {"next": "seed"},
+      "seed": {"next": "seedling"},
+      "seedling": {"next": "end"},
+    };
+
+    this.stateMachine = new StateMachine(states, transitions);
+  }
+
+  setup() {
+    this.container = new PIXI.Container();
+    this.container.interactive = true;
+    this.container.width = appSize[0];
+    this.container.height = appSize[1];
+    sceneLayer.addChild(this.container);
+
+    this.background = makeSprite("images/tree scene.png");
+    this.container.addChild(this.background);
+
+    this.stateMachine.setup();
+  }
+
+  update(timeSinceStart, timeScale) {
+    this.stateMachine.update(timeSinceStart, timeScale);
+  }
+
+  teardown() {
+    this.stateMachine.teardown();
+  }
+}
+
+
+// class EatingScene extends Entity {
+//   //   fruit are a way for plants to get animals to spread their seeds - "say you're a plant and you want to spread your seeds"
+//   // there are other ways to spread seeds of course: wind and water
+//   // but fruit takes advantage of animals, pwhich bring the seeds far and wide, and deposit them in "fertaliser"
+//   // trick is:
+//   //   fruit must be tasty (e.g. lots of sugar)
+//   //   that seeds must be tough enough to survive digestion
+//   //     (in fact there are fruit that have really big seeds that no animals eat anymore)
+
+
+//   setup() {
+//     // this.subtitleRunner = new SubtitleRunner([
+//     //   [0, "This is Play Curious."],
+//     //   [2000, "A series of playful interactions about topics ranging from science to history,"],
+//     //   [5000, "from design to economics."],
+//     //   [7000, "There's a new episode every 2 weeks,"],
+//     //   [9000, "so check us out at playcurious.com,"],
+//     //   [12000, "and download our phone app so you play as soon as they come out."],
+//     //   [14000, "Now back to bananas."],
+//     //   [17000, ""],
+//     // ]);
+//     // this.subtitleRunner.setup();
+
+//     this.state = "intro"; // states are intro, seed, fall, sprout, wind, water
+
+
+//     this.container = new PIXI.Container();
+//     this.container.interactive = true;
+//     this.container.width = appSize[0];
+//     this.container.height = appSize[1];
+//     sceneLayer.addChild(this.container);
+
+//     this.background = makeSprite("images/tree scene.png");
+//     this.container.addChild(this.background);
+
+//     changeSubtitle();
+//   }
+
+//   update(timeSinceStart, timeScale) {
+//     switch(this.state) {
+//       case "intro":
+//         if(timeSinceStart < 2000)
+//         break;
+//     }
+//     //this.subtitleRunner.update(timeSinceStart, timeScale);
+//   }
+
+//   requestedTransition(timeSinceStart) { return null; }
+
+//   teardown() {
+//     sceneLayer.removeChild(this.container);
+//     //this.subtitleRunner.teardown();
+//   }
+// }
+
+
 
 function provideNextScene(currentScene, requestedTransition) {
   switch(currentScene.constructor.name) {
@@ -417,10 +661,15 @@ const app = new PIXI.Application();
 document.body.appendChild(app.view);
 
 app.loader
-  .add("images/apple.png")
-  .add("images/orange.png")
-  .add("images/banana.png")
-  .add("images/logo.png")
+  .add(["images/apple.png",
+    "images/orange.png",
+    "images/banana.png",
+    "images/logo.png",
+    "images/tree scene.png",
+    "images/seed.png",
+    "images/seedling.png",
+    "images/animal.png",
+    ])
   .on("progress", loadProgressHandler)
   .load(setup);
 
@@ -475,6 +724,7 @@ function getStartingScene() {
   switch(sceneName) {
     case "intro": return new IntroScene();
     case "logo": return new LogoScene();
+    case "eating": return new EatingScene();
   } 
 }
 
