@@ -89,6 +89,7 @@ class StateMachine extends Entity {
       this.state = this.states[nextStateName];
       this.state.setup();      
     } else {
+      console.warn("Cannot find state", nextStateName);
       this.state = null;
     }
 
@@ -147,7 +148,7 @@ class ParallelEntities extends Entity {
   }
 
   requestedTransition(timeSinceStart) { 
-    return this.entities[0].requestedTransition();
+    return this.entities[0].requestedTransition(timeSinceStart);
   }
 }
 
@@ -192,7 +193,7 @@ function clamp(x, min, max) {
   return Math.min(max, Math.max(min, x));
 }
 
-function distanceBetweenPixiPoints(a, b) {
+function distanceBetween(a, b) {
   let x = a.x - b.x;
   let y = a.y - b.y;
   return Math.sqrt(x*x + y*y);
@@ -203,6 +204,14 @@ function lerp(a, b, p) {
   const y = b.y - a.y;
   return new PIXI.Point(a.x + p * x, a.y + p * y);
 }
+
+function moveTowards(a, b, speed) {
+  const d = distanceBetween(a, b);
+  return lerp(a, b, clamp(speed / d, 0, 1));
+}
+
+const EPSILON = 0.001;
+
 
 class IntroScene extends Entity {
   setup() {
@@ -304,7 +313,7 @@ class IntroScene extends Entity {
           // look for the first sprite that is within the mouth size and remove it
           let foundSprite = false;
           for(let i = this.appleCount + this.orangeCount; !foundSprite && i < this.sprites.length; i++) {
-            if(distanceBetweenPixiPoints(this.sprites[i].position, this.mouth.position) < 75)
+            if(distanceBetween(this.sprites[i].position, this.mouth.position) < 75)
             {
               // Remove graphics
               this.container.removeChild(this.sprites[i]);
@@ -486,6 +495,19 @@ class LogoScene extends Entity {
   }
 }
 
+
+  //   fruit are a way for plants to get animals to spread their seeds - "say you're a plant and you want to spread your seeds"
+  // there are other ways to spread seeds of course: wind and water
+  // but fruit takes advantage of animals, pwhich bring the seeds far and wide, and deposit them in "fertaliser"
+  // trick is:
+  //   fruit must be tasty (e.g. lots of sugar)
+  //   that seeds must be tough enough to survive digestion
+  //     (in fact there are fruit that have really big seeds that no animals eat anymore)
+
+
+// TODO; shake the tree to make the seed fall
+// TODO: have the tree and fruit shake when you hit them 
+
 class EatingScene extends Entity {
   constructor() {
     super();
@@ -494,14 +516,17 @@ class EatingScene extends Entity {
     const startingSeedPos = new PIXI.Point(249, 221);
     const endingSeedPos = new PIXI.Point(262, 446);
     const seedFallTime = 5000;
+    const fruitFallSpeed = 3;
+
+    const startingAnimalPos = new PIXI.Point(600, 446);
 
     const states = {
       "start": new SubtitleRunner([
         [0, "But first we need to talk about fruit."],
         [2000, "What are fruit anyway?"],
-        [4000, "Fruit are simply a way for plants to spread their seeds."],
-        [6000, "Now, there are other ways to spread seeds."],
-        [8000, "For example, a plant could just drop them on the ground, simple as that."],
+        [4000, "Fruit are simply a clever way for plants to spread their seeds."],
+        [6000, "Now, there are simpler ways to spread seeds."],
+        [8000, "For example, a plant could just drop them on the ground."],
         [10000, ""]
       ]),
       "seed": new class extends Entity {
@@ -553,12 +578,86 @@ class EatingScene extends Entity {
           [4000, ""]
         ])
       ),
+      "wind": new SubtitleRunner([
+        [0, "Some plants use the wind or the water to spread their seeds further."],
+        [3000, ""],
+      ]),
+      "fruit": new class extends Entity {
+        setup() {
+          this.hitTreeTimes = 0;
+          this.lastX = 800;
+          this.state = "start"; // states are start, falling, eating, pooping, transitionOut
+
+          this.fruit = makeSprite("images/small fruit.png");
+          this.fruit.anchor.set(0.5);
+          this.fruit.position = startingSeedPos;
+          scene.container.addChild(this.fruit);
+
+          this.animal = makeSprite("images/animal.png");
+          this.animal.anchor.set(0.5);
+          this.animal.position = startingAnimalPos;
+          this.animal.interactive = true;
+          this.animal.on("pointerdown", () => this.pointerDown = true);
+          this.animal.on("pointerup", () => this.pointerDown = false);
+          this.animal.on("pointermove", (e) => {
+            if(!this.pointerDown) return;
+
+            const x = e.data.getLocalPosition(app.stage).x;
+            if(this.lastX > 275 && x < 275) {
+              this.hitTreeTimes++;
+              if(this.hitTreeTimes == 3) {
+                this.state = "falling";
+              }
+            }
+            this.lastX = x;
+
+            this.animal.position.x = clamp(x, 275, 725);;
+          });
+          scene.container.addChild(this.animal);
+        }
+
+        update() {
+          switch(this.state) {
+            case "falling":
+              this.fruit.position = moveTowards(this.fruit.position, endingSeedPos, fruitFallSpeed);
+              if(distanceBetween(this.fruit.position, endingSeedPos) < EPSILON) 
+                this.state = "eating";
+              break;
+            case "eating": 
+              if(this.animal.position.x < 300) {
+                scene.container.removeChild(this.fruit);
+                this.animal.scale.set(-1, 1); // Turn animal around
+                
+                this.state = "pooping";
+              }
+              break;
+            case "pooping": 
+              if(this.animal.position.x > 700) {
+                this.poop = makeSprite("images/poop.png");
+                this.poop.anchor.set(0.5);
+                this.poop.position = startingAnimalPos;
+                scene.container.addChild(this.poop);
+
+                scene.container.removeChild(this.animal);
+
+                this.state = "transitionOut";
+                break;
+            }
+          }
+        }
+
+        teardown() {
+          scene.container.removeChild(this.poop);
+        }
+      }
     };
 
     const transitions = {
       "start": {"next": "seed"},
       "seed": {"next": "seedling"},
-      "seedling": {"next": "end"},
+      "seedling": {"next": "wind"},
+      "wind": {"next": "fruit"},
+      "fruit": {"next": "end"},
     };
 
     this.stateMachine = new StateMachine(states, transitions);
@@ -587,63 +686,6 @@ class EatingScene extends Entity {
 }
 
 
-// class EatingScene extends Entity {
-//   //   fruit are a way for plants to get animals to spread their seeds - "say you're a plant and you want to spread your seeds"
-//   // there are other ways to spread seeds of course: wind and water
-//   // but fruit takes advantage of animals, pwhich bring the seeds far and wide, and deposit them in "fertaliser"
-//   // trick is:
-//   //   fruit must be tasty (e.g. lots of sugar)
-//   //   that seeds must be tough enough to survive digestion
-//   //     (in fact there are fruit that have really big seeds that no animals eat anymore)
-
-
-//   setup() {
-//     // this.subtitleRunner = new SubtitleRunner([
-//     //   [0, "This is Play Curious."],
-//     //   [2000, "A series of playful interactions about topics ranging from science to history,"],
-//     //   [5000, "from design to economics."],
-//     //   [7000, "There's a new episode every 2 weeks,"],
-//     //   [9000, "so check us out at playcurious.com,"],
-//     //   [12000, "and download our phone app so you play as soon as they come out."],
-//     //   [14000, "Now back to bananas."],
-//     //   [17000, ""],
-//     // ]);
-//     // this.subtitleRunner.setup();
-
-//     this.state = "intro"; // states are intro, seed, fall, sprout, wind, water
-
-
-//     this.container = new PIXI.Container();
-//     this.container.interactive = true;
-//     this.container.width = appSize[0];
-//     this.container.height = appSize[1];
-//     sceneLayer.addChild(this.container);
-
-//     this.background = makeSprite("images/tree scene.png");
-//     this.container.addChild(this.background);
-
-//     changeSubtitle();
-//   }
-
-//   update(timeSinceStart, timeScale) {
-//     switch(this.state) {
-//       case "intro":
-//         if(timeSinceStart < 2000)
-//         break;
-//     }
-//     //this.subtitleRunner.update(timeSinceStart, timeScale);
-//   }
-
-//   requestedTransition(timeSinceStart) { return null; }
-
-//   teardown() {
-//     sceneLayer.removeChild(this.container);
-//     //this.subtitleRunner.teardown();
-//   }
-// }
-
-
-
 function provideNextScene(currentScene, requestedTransition) {
   switch(currentScene.constructor.name) {
     case "IntroScene":
@@ -669,8 +711,9 @@ app.loader
     "images/seed.png",
     "images/seedling.png",
     "images/animal.png",
-    ])
-  .on("progress", loadProgressHandler)
+    "images/small fruit.png",
+    "images/poop.png"
+  ]).on("progress", loadProgressHandler)
   .load(setup);
 
 
