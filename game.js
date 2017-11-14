@@ -241,6 +241,28 @@ class ParallelEntities extends Entity {
 const EPSILON = 0.001;
 const BLOCK_WIDTH = 50;
 
+let galleryShapes = [];
+
+function gridPosToPixelPos(gridPos) {
+  return multiply(gridPos, BLOCK_WIDTH);
+}
+
+function pixelPosToGridPos(pixelPos) {
+  return round(divide(pixelPos, BLOCK_WIDTH));
+}  
+
+function makeBlockShape(gridPos) {
+  let rect = new PIXI.Graphics();
+  rect.beginFill(0x00FF00);
+  rect.lineStyle(4, 0x000000, 1);
+  rect.drawRect(-BLOCK_WIDTH/2, -BLOCK_WIDTH/2, BLOCK_WIDTH, BLOCK_WIDTH);
+  rect.endFill();
+
+  rect.position = gridPosToPixelPos(gridPos);
+  return rect;
+}
+
+
 
 class BlockScene extends Entity {
   constructor() {
@@ -248,6 +270,7 @@ class BlockScene extends Entity {
   }
 
   setup() {
+    this.done = false;
     this.draggingBlock = null;
 
     this.container = new PIXI.Container();
@@ -262,7 +285,7 @@ class BlockScene extends Entity {
       const gridPos = new PIXI.Point(i, 0);
       this.blockGrid.push(gridPos);
 
-      let rect = this.makeBlockShape(gridPos);
+      let rect = makeBlockShape(gridPos);
 
       rect.buttonMode = true;
       rect.on("pointerdown", this.onPointerDown.bind(this))
@@ -290,16 +313,18 @@ class BlockScene extends Entity {
     this.galleryLayer = new PIXI.Container();
     galleryParent.addChild(this.galleryLayer);
 
-
-    this.galleryShapes = [];
+    // HTML
+    document.getElementById("blocks-gui").style.display = "block";
     document.getElementById("add-shape").addEventListener("click", this.onAddShape.bind(this));
+    document.getElementById("done-adding").addEventListener("click", this.onDoneAdding.bind(this));
   }
-
-  update(timeSinceStart, timeScale) { }
 
   teardown() {
-    sceneLayer.removeChild(this.blocksContainer);
+    sceneLayer.removeChild(this.container);
+    document.getElementById("blocks-gui").style.display = "none";
   }
+
+  requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
 
   onPointerDown(e) {
     this.draggingBlock = e.currentTarget;
@@ -307,7 +332,7 @@ class BlockScene extends Entity {
     // Reorder so this block is on top
     this.blocksContainer.setChildIndex(this.draggingBlock, this.blocksContainer.children.length - 1);
 
-    const gridPos = this.pixelPosToGridPos(this.draggingBlock.position);
+    const gridPos = pixelPosToGridPos(this.draggingBlock.position);
     this.blockGrid = removeFromArray(this.blockGrid, gridPos);
   }
 
@@ -337,7 +362,7 @@ class BlockScene extends Entity {
 
   updateBlockInteractivity() {
     for(const blockGraphic of this.blocksContainer.children) {
-      if(this.canMoveBlock(this.pixelPosToGridPos(blockGraphic.position))) {
+      if(this.canMoveBlock(pixelPosToGridPos(blockGraphic.position))) {
         blockGraphic.interactive = true;
       } else {
         blockGraphic.interactive = false;
@@ -347,22 +372,14 @@ class BlockScene extends Entity {
 
   dropBlock(block, droppedPos) {
     // Find closest grid position
-    const gridPos = this.pixelPosToGridPos(droppedPos);
+    const gridPos = pixelPosToGridPos(droppedPos);
 
     const freeGridPositions = this.findFreeGridPositions();
     const closestGridPos = _.min(freeGridPositions, freePos => distance(gridPos, freePos));
     
-    block.position = this.gridPosToPixelPos(closestGridPos);
+    block.position = gridPosToPixelPos(closestGridPos);
     this.blockGrid.push(closestGridPos);
   }
-
-  gridPosToPixelPos(gridPos) {
-    return multiply(gridPos, BLOCK_WIDTH);
-  }
-
-  pixelPosToGridPos(pixelPos) {
-    return round(divide(pixelPos, BLOCK_WIDTH));
-  }  
 
   findFreeGridPositions() {
     var ret = [];
@@ -422,35 +439,102 @@ class BlockScene extends Entity {
 
   onAddShape() {
     const galleryShape = cloneData(this.blockGrid)
-    this.galleryShapes.push(galleryShape);
+    galleryShapes.push(galleryShape);
     this.updateGalleryShape(galleryShape);
+  }
+
+  onDoneAdding() {
+    this.done = true;
   }
 
   updateGalleryShape(galleryShape) {
     this.galleryLayer.removeChildren();
     for(let block of galleryShape)
-      this.galleryLayer.addChild(this.makeBlockShape(block));
+      this.galleryLayer.addChild(makeBlockShape(block));
     centerContainer(this.galleryLayer, new PIXI.Point());
   }
+}
 
-  makeBlockShape(gridPos) {
-    let rect = new PIXI.Graphics();
-    rect.beginFill(0x00FF00);
-    rect.lineStyle(4, 0x000000, 1);
-    rect.drawRect(-BLOCK_WIDTH/2, -BLOCK_WIDTH/2, BLOCK_WIDTH, BLOCK_WIDTH);
-    rect.endFill();
+class GalleryScene extends Entity {
+  setup() {
+    this.done = false;
+    this.selectedIndexes = [];
 
-    rect.position = this.gridPosToPixelPos(gridPos);
-    return rect;
+    this.container = new PIXI.Container();
+    sceneLayer.addChild(this.container);
+
+    for(let i = 0; i < galleryShapes.length; i++) {
+      const row = Math.floor(i / 9); 
+      const col = Math.floor(i % 9);
+      const galleryShapeCenter = new PIXI.Point(60 + col * 100, 60 + row * 100);
+
+      const galleryBg = new PIXI.Graphics();
+      galleryBg.beginFill(0x333333);
+      galleryBg.drawRect(-40, -40, 80, 80);
+      galleryBg.endFill();
+      galleryBg.position = galleryShapeCenter;
+      this.container.addChild(galleryBg);
+
+      galleryBg.on("pointerdown", e => this.onToggleShape(galleryBg, i));
+      galleryBg.buttonMode = true;
+      galleryBg.interactive = true;
+
+      const galleryParent = new PIXI.Container();
+      galleryParent.position = galleryShapeCenter;
+      galleryParent.scale.set(0.1);
+      this.container.addChild(galleryParent);
+
+      const galleryLayer = new PIXI.Container();
+      for(let block of galleryShapes[i])
+        galleryLayer.addChild(makeBlockShape(block));
+      centerContainer(galleryLayer, new PIXI.Point());
+      galleryParent.addChild(galleryLayer);
+
+      // HTML
+      document.getElementById("selection-gui").style.display = "block";
+      document.getElementById("done-selection").addEventListener("click", e => this.done = true);
+    }
   }
+
+  teardown() {
+    sceneLayer.removeChild(this.container);
+    document.getElementById("selection-gui").style.display = "none";
+  }
+  
+  requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
+
+  onToggleShape(shape, shapeIndex) {
+    const isSelected = !_.contains(this.selectedIndexes, shapeIndex);
+
+    if(isSelected) this.selectedIndexes.push(shapeIndex);
+    else this.selectedIndexes = removeFromArray(this.selectedIndexes, shapeIndex); 
+    
+    shape.beginFill(isSelected ? 0xFF0000 : 0x333333);
+    shape.drawRect(-40, -40, 80, 80);
+    shape.endFill();
+  }
+}
+
+class DoneScene extends Entity {
+  setup() {
+    document.getElementById("done-gui").style.display = "block";
+  }
+
+  teardown() {
+    document.getElementById("done-gui").style.display = "none";
+  }  
 }
 
 
 function provideNextScene(currentScene, requestedTransition) {
   switch(currentScene.constructor.name) {
-    /*case "IntroScene":
-      return new LogoScene();
-      break;*/
+    case "BlockScene":
+      return new GalleryScene();
+      break;
+
+    case "GalleryScene":
+      return new DoneScene();
+      break;
 
     default:
       console.error("No transition from", currentScene, "with transition", requestedTransition);
