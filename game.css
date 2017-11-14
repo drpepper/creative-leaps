@@ -1,0 +1,17 @@
+#game-container {
+	position: relative;
+	width: 960px;
+	height: 540px;
+}
+
+#html-layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+#pixi-canvas {
+	position: absolute;
+	top: 0;
+	left: 0;	
+}
