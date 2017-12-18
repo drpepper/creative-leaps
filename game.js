@@ -299,14 +299,16 @@ class BlockScene extends Entity {
 
 
     const galleryBg = new PIXI.Graphics();
-    galleryBg.beginFill(0x333333);
-    galleryBg.drawRect(0, 0, 200, 200);
+    galleryBg.beginFill(0x808080);
+    galleryBg.lineColor = "0xffffff";
+    galleryBg.lineWidth = 1;
+    galleryBg.drawRect(0, 0, 150, 150);
     galleryBg.endFill();
-    galleryBg.position.set(740, 20);
+    galleryBg.position.set(800, 10);
     this.container.addChild(galleryBg);
 
     const galleryParent = new PIXI.Container();;
-    galleryParent.position.set(840, 120);
+    galleryParent.position.set(875, 85);
     galleryParent.scale.set(0.3);
     this.container.addChild(galleryParent);
 
@@ -466,7 +468,7 @@ class GalleryScene extends Entity {
     for(let i = 0; i < galleryShapes.length; i++) {
       const row = Math.floor(i / 9); 
       const col = Math.floor(i % 9);
-      const galleryShapeCenter = new PIXI.Point(60 + col * 100, 60 + row * 100);
+      const galleryShapeCenter = new PIXI.Point(60 + col * 100, 80 + row * 100);
 
       const galleryBg = new PIXI.Graphics();
       galleryBg.beginFill(0x333333);
