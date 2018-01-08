@@ -1,85 +1,105 @@
+button {
+  background-color: brown;
+  border: 1px solid orange;
+  width: 150px;
+  color: white;
+  font-size: 0.7em;
+  cursor: pointer;
+}
+
+button:hover {
+  border: 1px dotted orange; 
+}
+
+button:disabled {
+  background-color: darkgrey; 
+  border: 1px solid white;
+}
+
+p {
+  color: white;
+}
+
+.hidden {
+  display: none;
+}
+
 #game-container {
-	position: relative;
-	width: 960px;
-	height: 540px;
+  position: relative;
+  width: 960px;
+  height: 540px;
 
-	font-family: Arial;
-	font-size: 20px;
-	color: limegreen;
+  font-family: Arial;
+  font-size: 20px;
+  color: limegreen;
 
-	text-align: center;
+  text-align: center;
 }
 
 #html-layer {
-	position: absolute;
-	top: 0;
-	left: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 #pixi-canvas {
-	position: absolute;
-	top: 0;
-	left: 0;	
+  position: absolute;
+  top: 0;
+  left: 0;  
 }
 
 #html-layer > * {
-	display: none;
+  display: none;
 
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 960px;
-	height: 540px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 960px;
+  height: 540px;
 
-	pointer-events: none;
+  pointer-events: none;
 }
 
 #html-layer input, button, label, a, select {
-	pointer-events: auto;
+  pointer-events: auto;
 }
 
-button {
-    background-color: brown;
-    border: 1px solid orange;
-    width: 150px;
-    color: white;
-    font-size: 0.7em;
-}
-
-button:hover{
-    border: 1px dotted orange; 
-}
-
-button:disabled{
-    background-color: darkgrey; 
-    border: 1px solid white;
-}
 
 #add-shape {
-	position: absolute;
+  position: absolute;
     top: 170px;
     right: 10px;    
 }
 
 #done-adding {
-	position: absolute;
-    top: 420px;
-    right: 10px;    
+  position: absolute;
+  top: 420px;
+  right: 10px;    
 }
 
 
 #gallery-instructions {
-	position: absolute;
-	top: -5px;
-	width: 100%;
+  position: absolute;
+  top: -5px;
+  width: 100%;
 }
 
 #done-selection {
-	position: absolute;
-	left: 400px;
-	bottom: 10px;
+  position: absolute;
+  left: 400px;
+  bottom: 10px;
 }
 
+.bottom-text {
+  position: absolute;
+  bottom: 20px;
+  text-align: center;
+  width: 100%;
+}
+
+.highlight {
+  color: limegreen;
+}
 
 /*
 

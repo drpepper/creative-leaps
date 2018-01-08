@@ -6,27 +6,74 @@
   <link href="game.css" rel="stylesheet">
 </head>
 <body>
-	<div id="game-container"> 
-		<canvas id="pixi-canvas"></canvas>
+  <div id="game-container"> 
+    <canvas id="pixi-canvas"></canvas>
 
-		<div id="html-layer">
-			<div id="blocks-gui">
-				<button id="add-shape">Collect Shape</button>
-				<br><button id="done-adding">Done</button>
-			</div>
-			<div id="selection-gui">
-				<p id="gallery-instructions">Please choose the 5 most creative shapes you've collected</p>
-				<button id="done-selection">Done</button>
-			</div>
-			<div id="done-gui">
-				<h1>You're done</h1>
-			</div>
-		</div>
-	</div>
+    <div id="html-layer">
+      <div id="intro-gui">
+        <h1>Welcome to the game of shifting shapes</h1>
+        <p>Your goal is to discover interesting and beautiful shapes.</p>
+        <p>Please continue to start the training session of the game.</p>
+        <br><button id="done-intro">Done</button>
+      </div>
+      <div id="training-gui">
+        <h1>Training Session</h1>
+        <div id="training-1">
+          <p>Your goal is to explore the space of "shifting shapes" 
+            <br>and to discover shapes that you find interesting and beautiful.</p>
+          <p>The shapes are composed of connected squares.</p>
+          <div class="bottom-text">
+            <p>At each step you can move one square from the current shape to create a new shape.</p>
+            <p class="highlight">Drag the left-most or right-most square to a different place.</p>
+          </div>
+        </div>
+        <div id="training-2" class="hidden">
+          <p>Only squares that are at the edge of the shape are movable</p>
+          <br><button id="done-training-2">Got it</button>
+        </div>
+        <div id="training-3" class="hidden">
+          <p>You can do as many moves as you like.</p>
+          <div class="bottom-text">
+            <p>When you find a shape that you like you can collect it 
+              <br>to a 'Gallery Space' by clicking on the ‘Collect Shape’ button.</p>
+            <p class="highlight">Click there now</p>
+          </div>
+        </div>
+        <div id="training-4" class="hidden">
+          <p>
+              At the last stage of the game you will see all the shapes 
+              <br>you have stored in the 'Gallery Space' and will be asked
+              <br>to choose among them.
+          </p>
+          <div class="bottom-text">
+              <p>
+                  The game is 12 minutes long.
+                  <br>Please play alone, in a quiet surroundings with no interruptions.
+                  <br>
+                  <br>Thanks and enjoy the game!
+              </p>
+              <button id="done-training-4">Let's play</button>
+          </div>
+        </div>
+      </div>
+      <div id="blocks-gui">
+        <button id="add-shape">Collect Shape</button>
+        <br><button id="done-adding">End Game</button>
+      </div>
+      <div id="selection-gui">
+        <p id="gallery-instructions">Please choose the 5 most creative shapes you've collected</p>
+        <button id="done-selection">Done</button>
+      </div>
+      <div id="done-gui">
+        <h1>You're done</h1>
+      </div>
+    </div>
+  </div>
 
-	<script src="deps/pixi.js"></script>
-	<!-- <script src="deps/scaleToWindow.js"></script> -->
-	<script src="deps/underscore.js"></script>
-	<script src="game.js"></script>
+  <script src="deps/pixi.js"></script>
+  <!-- <script src="deps/scaleToWindow.js"></script> -->
+  <script src="deps/underscore.js"></script>
+  <script src="util.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>

@@ -1,243 +1,3 @@
-// UTILITY FUNCTIONS
-
-function makeSprite(name) { 
-  return new PIXI.Sprite(app.loader.resources[name].texture);
-}
-
-function clamp(x, min, max) {
-  return Math.min(max, Math.max(min, x));
-}
-
-function distanceBetween(a, b) {
-  let x = a.x - b.x;
-  let y = a.y - b.y;
-  return Math.sqrt(x*x + y*y);
-}
-
-function lerp(a, b, p) {
-  const x = b.x - a.x;
-  const y = b.y - a.y;
-  return new PIXI.Point(a.x + p * x, a.y + p * y);
-}
-
-function add(...points) {
-  const r = new PIXI.Point();
-  for(p of points) {
-    r.x += p.x;
-    r.y += p.y;
-  } 
-  return r;
-}
-
-function subtract(...points) {
-  const r = new PIXI.Point(points[0].x, points[0].y);
-  for(let i = 1; i < points.length; i++) {
-    r.x -= points[i].x;
-    r.y -= points[i].y;
-  } 
-  return r;
-}
-
-function multiply(a, p) {
-  return new PIXI.Point(a.x * p, a.y * p);
-}
-
-function divide(a, p) {
-  return new PIXI.Point(a.x / p, a.y / p);
-}
-
-function floor(p) {
-  return new PIXI.Point(Math.floor(p.x), Math.floor(p.y));
-}
-
-function round(p) {
-  return new PIXI.Point(Math.round(p.x), Math.round(p.y));
-}
-
-function min(...points) {
-  const r = new PIXI.Point(Infinity, Infinity);
-  for(p of points) {
-    r.x = Math.min(p.x, r.x);
-    r.y = Math.min(p.y, r.y);
-  } 
-  return r;
-}
-
-function max(...points) {
-  const r = new PIXI.Point(-Infinity, -Infinity);
-  for(p of points) {
-    r.x = Math.max(p.x, r.x);
-    r.y = Math.max(p.y, r.y);
-  } 
-  return r;
-}
-
-function average(...points) {
-  var sum = new PIXI.Point();
-  for(let point of points) sum = add(sum, point);
-  return divide(sum, points.length);
-}
-
-function moveTowards(a, b, speed) {
-  const d = distanceBetween(a, b);
-  return lerp(a, b, clamp(speed / d, 0, 1));
-}
-
-// Test containment using isEqual
-function contains(list, p) {
-  for(let x of list) {
-    if(_.isEqual(x, p)) return true;
-  }
-  return false;
-} 
-
-// Test containment using isEqual
-function indexOf(list, p) {
-  for(let i = 0; i < list.length; i++) {
-    if(_.isEqual(list[i], p)) return i;
-  }
-  return -1;
-} 
-
-// Find unique elements using isEqual
-function uniq(array) {
-  let results = [];
-  let seen = [];
-  array.forEach((value, index) => {
-    if(!contains(seen, value)) {
-      seen.push(value)
-      results.push(array[index])
-    }
-  });
-  return results;
-}
-
-// Like Underscore's method, but uses contains()
-function difference(array) {
-  rest = Array.prototype.concat.apply(Array.prototype, Array.prototype.slice.call(arguments, 1));
-  return _.filter(array, (value) => !contains(rest, value));
-}
-
-// Uses contains()
-function removeFromArray(array, value) {
-  let ret = [];
-  for(let element of array) if(!_.isEqual(element, value)) ret.push(element);
-  return ret;
-}
-
-function distance(a, b) {
-  const x = a.x - b.x;
-  const y = a.y - b.y;
-  return Math.sqrt(x*x + y*y);
-}
-
-function cloneData(o) {
-  return JSON.parse(JSON.stringify(o));
-} 
-
-function centerContainer(container, centerPos) {
-  const oldBlockPositions = container.children.map(c => c.position);
-  const minBlockPos = min.apply(null, oldBlockPositions);
-  const maxBlockPos = max.apply(null, oldBlockPositions);
-  const blockCenterPos = average(minBlockPos, maxBlockPos);
-  const offset = subtract(centerPos, blockCenterPos);
-
-  container.position = offset;
-}
-
-
-class Entity {
-  setup() {}
-  update(timeSinceStart, timeScale) {}
-  teardown() {}
-  requestedTransition(timeSinceStart) { return null; } // Provide string transition name, such as "next"
-}
-
-class StateMachine extends Entity {
-  constructor(states, transitions, startingState = "start", endingState = "end") {
-    super();
-
-    this.states = states;
-    this.transitions = transitions;
-    this.startingState = startingState;
-    this.endingState = endingState;
-  }
-
-  changeState(timeSinceStart, nextStateName) {
-    if(this.state) this.state.teardown();
-
-    this.stateName = nextStateName;
-
-    if(nextStateName in this.states) {
-      this.state = this.states[nextStateName];
-      this.state.setup();      
-    } else {
-      console.warn("Cannot find state", nextStateName);
-      this.state = null;
-    }
-
-    this.sceneStartedAt = timeSinceStart;
-  }
-
-  setup() {
-    this.changeState(0, this.startingState)
-  }
-
-  update(timeSinceStart, timeScale) {
-    if(!this.state) return;
-
-    const timeSinceStateStart = timeSinceStart - this.sceneStartedAt;
-    this.state.update(timeSinceStateStart, timeScale);
-
-    const requestedTransition = this.state.requestedTransition(timeSinceStateStart);
-    if(requestedTransition != null) {
-      const nextStateName = this.transitions[this.stateName][requestedTransition];
-      if(nextStateName != null) this.changeState(timeSinceStart, nextStateName)
-    }
-  }
-
-  teardown() {
-    if(this.state) this.state.teardown();
-  }
-
-  requestedTransition(timeSinceStart) { 
-    return this.stateName == this.endingState ? "next" : null;
-  }
-}
-
-class ParallelEntities extends Entity {
-  constructor() {
-    super();
-
-    this.entities = arguments;
-  }
-
-  setup() {
-    for(const entity of this.entities) {
-      entity.setup();
-    } 
-  }
-
-  update(timeSinceStart, timeScale) {
-    for(const entity of this.entities) {
-      entity.update(timeSinceStart, timeScale);
-    }
-  } 
-
-  teardown() {
-    for(const entity of this.entities) {
-      entity.teardown();
-    }     
-  }
-
-  requestedTransition(timeSinceStart) { 
-    return this.entities[0].requestedTransition(timeSinceStart);
-  }
-}
-
-
-
-
 const EPSILON = 0.001;
 const BLOCK_WIDTH = 50;
 
@@ -263,12 +23,71 @@ function makeBlockShape(gridPos) {
 }
 
 
+class IntroScene extends Entity {
+  setup() {
+    document.getElementById("intro-gui").style.display = "block";
 
-class BlockScene extends Entity {
-  constructor() {
-    super();
+    this.done = false;
+    document.getElementById("done-intro").addEventListener("click", e => this.done = true);
   }
 
+  teardown() {
+    document.getElementById("intro-gui").style.display = "none";
+  }  
+
+  requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
+}
+
+
+class TrainingScene extends Entity {
+  setup() {
+    this.done = false;
+    this.didDropBlock = false;
+
+    this.blockScene = new BlockScene(true);
+    this.blockScene.setup();
+
+    document.getElementById("add-shape").style.display = "none";
+    document.getElementById("done-adding").style.display = "none";
+
+    this.blockScene.on("droppedBlock", this.onDroppedBlock, this);
+    this.blockScene.on("addedShape", this.onAddedShape, this);
+
+    document.getElementById("training-gui").style.display = "block";
+    document.getElementById("done-training-2").addEventListener("click", this.onDonePart2.bind(this));
+    document.getElementById("done-training-4").addEventListener("click", e => this.done = true);
+  }
+
+  teardown() {
+    this.blockScene.teardown();
+    document.getElementById("training-gui").style.display = "none";
+  }
+
+  requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
+
+  onDroppedBlock() {
+    if(this.didDropBlock) return;
+
+    this.didDropBlock = true;
+    document.getElementById("training-1").style.display = "none";
+    document.getElementById("training-2").style.display = "block";
+  }
+
+  onDonePart2() {
+    document.getElementById("training-2").style.display = "none";
+    document.getElementById("training-3").style.display = "block";
+
+    document.getElementById("add-shape").style.display = "block";
+  }
+
+  onAddedShape() {
+    document.getElementById("training-3").style.display = "none";
+    document.getElementById("training-4").style.display = "block";
+  }
+}
+
+
+class BlockScene extends Entity {
   setup() {
     this.done = false;
     this.draggingBlock = null;
@@ -345,6 +164,8 @@ class BlockScene extends Entity {
     this.dropBlock(this.draggingBlock, this.draggingBlock.position);
     this.draggingBlock = null;
     this.updateBlocks();
+
+    this.emit("droppedBlock");
   }
 
   onPointerMove(e) {
@@ -443,6 +264,8 @@ class BlockScene extends Entity {
     const galleryShape = cloneData(this.blockGrid)
     galleryShapes.push(galleryShape);
     this.updateGalleryShape(galleryShape);
+
+    this.emit("addedShape");
   }
 
   onDoneAdding() {
@@ -517,6 +340,7 @@ class GalleryScene extends Entity {
   }
 }
 
+
 class DoneScene extends Entity {
   setup() {
     document.getElementById("done-gui").style.display = "block";
@@ -525,23 +349,6 @@ class DoneScene extends Entity {
   teardown() {
     document.getElementById("done-gui").style.display = "none";
   }  
-}
-
-
-function provideNextScene(currentScene, requestedTransition) {
-  switch(currentScene.constructor.name) {
-    case "BlockScene":
-      return new GalleryScene();
-      break;
-
-    case "GalleryScene":
-      return new DoneScene();
-      break;
-
-    default:
-      console.error("No transition from", currentScene, "with transition", requestedTransition);
-      return null;
-  }
 }
 
 
@@ -609,16 +416,25 @@ function loadProgressHandler(loader, resource) {
   //console.log("loading: " + resource.name);
 }
 
+
+
+const scenes = {
+  intro: IntroScene,
+  training: TrainingScene,
+  block: BlockScene,
+  done: DoneScene
+};
+
+const sceneTransitions = {
+  intro: "training",
+  training: "block",
+  block: "done",
+};
+
+
+const defaultStartingScene = "intro";
+
 let sceneLayer;
-
-const defaultStartingScene = "block";
-
-function getStartingScene() {
-  const sceneName = new URL(document.location).searchParams.get("scene") || defaultStartingScene;
-  switch(sceneName) {
-    case "block": return new BlockScene();
-  } 
-}
 
 function setup() {
   sceneLayer = new PIXI.Container();
@@ -627,19 +443,22 @@ function setup() {
   app.ticker.add(update);
 
   // Start scene
-  changeScene(getStartingScene());
+  changeScene(getStartingScene(defaultStartingScene));
 }
 
 let currentScene;
+let currentSceneName;
 let sceneStartedAt = 0;
 
-function changeScene(newScene) {
+function changeScene(newSceneName) {
   if(currentScene) currentScene.teardown();
 
-  newScene.setup();
-  currentScene = newScene;
+  currentSceneName = newSceneName;  
+  currentScene = new scenes[currentSceneName];
+
   sceneStartedAt = Date.now();
-  newScene.update(0);
+  currentScene.setup();
+  currentScene.update(0);
 }
 
 function update(timeScale)
@@ -649,8 +468,8 @@ function update(timeScale)
 
   const requestedTransition = currentScene.requestedTransition(timeSinceStart);
   if(requestedTransition != null) {
-      const nextScene = provideNextScene(currentScene, requestedTransition);
-      if(nextScene != null) changeScene(nextScene);
+      const nextSceneName = provideNextScene(sceneTransitions, currentSceneName, requestedTransition);
+      if(nextSceneName != null) changeScene(nextSceneName);
   }
   app.renderer.render(app.stage);
 }
