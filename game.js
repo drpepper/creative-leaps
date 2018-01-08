@@ -2,6 +2,9 @@ const EPSILON = 0.001;
 const BLOCK_WIDTH = 50;
 
 let galleryShapes = [];
+let searchScore = 0.33;
+let redmetricsId = "12345";
+
 
 function gridPosToPixelPos(gridPos) {
   return multiply(gridPos, BLOCK_WIDTH);
@@ -20,6 +23,10 @@ function makeBlockShape(gridPos) {
 
   rect.position = gridPosToPixelPos(gridPos);
   return rect;
+}
+
+function calculateSearchScore(shapeCount, timePlayed) {
+  return Math.min(2 * ((1/88) * shapeCount * (720000 / timePlayed) - 0.5), 1);
 }
 
 
@@ -59,6 +66,7 @@ class TrainingScene extends Entity {
   }
 
   teardown() {
+    document.getElementById("done-adding").style.display = "block";
     this.blockScene.teardown();
     document.getElementById("training-gui").style.display = "none";
   }
@@ -270,6 +278,8 @@ class BlockScene extends Entity {
 
   onDoneAdding() {
     this.done = true;
+
+    searchScore = calculateSearchScore()
   }
 
   updateGalleryShape(galleryShape) {
@@ -318,8 +328,14 @@ class GalleryScene extends Entity {
       // HTML
       document.getElementById("selection-gui").style.display = "block";
       document.getElementById("done-selection").addEventListener("click", e => this.done = true);
+
+      this.updateDoneButton();
     }
   }
+
+  update(timeSinceStart) {
+    if(this.done) searchScore = calculateSearchScore(galleryShapes.length, timeSinceStart);
+  } 
 
   teardown() {
     sceneLayer.removeChild(this.container);
@@ -334,20 +350,52 @@ class GalleryScene extends Entity {
     if(isSelected) this.selectedIndexes.push(shapeIndex);
     else this.selectedIndexes = removeFromArray(this.selectedIndexes, shapeIndex); 
     
-    shape.beginFill(isSelected ? 0xFF0000 : 0x333333);
+    shape.beginFill(isSelected ? 0x9B2526 : 0x333333);
     shape.drawRect(-40, -40, 80, 80);
     shape.endFill();
+
+    this.updateDoneButton();
+  }
+
+  updateDoneButton() {
+    document.getElementById("done-selection").style.display = this.selectedIndexes.length == 5 ? "block" : "none";
   }
 }
 
 
-class DoneScene extends Entity {
+class ResultsScene extends Entity {
   setup() {
-    document.getElementById("done-gui").style.display = "block";
+    this.container = new PIXI.Container();
+    sceneLayer.addChild(this.container);
+
+    const slider = new PIXI.Sprite(app.loader.resources["images/slider.png"].texture);
+    slider.anchor.set(0.5);
+    slider.position.set(app.renderer.width / 2, 145);
+    this.container.addChild(slider);
+
+    const ball = new PIXI.Graphics();
+    ball.beginFill("0x2CC62C");
+    ball.drawCircle(app.renderer.width / 2 + searchScore * 255, 120, 10);
+    this.container.addChild(ball);
+
+    document.getElementById("results-gui").style.display = "block";
+    if(searchScore > 0) {
+      document.getElementById("rapid-search-text").style.display = "block";
+    } else {
+      document.getElementById("focused-search-text").style.display = "block";
+    }
+
+    const searchScorePercent = Math.round(Math.abs(searchScore) * 100);
+    for(let el of document.getElementsByClassName("searchScorePercent")) {
+      el.innerText = searchScorePercent;
+    }
+
+    document.getElementById("code").innerText = redmetricsId;
   }
 
   teardown() {
-    document.getElementById("done-gui").style.display = "none";
+    document.getElementById("results-gui").style.display = "none";
+    sceneLayer.removeChild(this.container);
   }  
 }
 
@@ -359,21 +407,10 @@ const app = new PIXI.Application({
 });
 
 
-/*
 app.loader
-  .add(["images/apple.png",
-    "images/orange.png",
-    "images/banana.png",
-    "images/logo.png",
-    "images/tree scene.png",
-    "images/seed.png",
-    "images/seedling.png",
-    "images/animal.png",
-    "images/small fruit.png",
-    "images/poop.png"
-  ]).on("progress", loadProgressHandler)
+  .add(["images/slider.png"])
+  .on("progress", loadProgressHandler)
   .load(setup);
-*/
 
 
 // // Scale canvas on 
@@ -422,13 +459,15 @@ const scenes = {
   intro: IntroScene,
   training: TrainingScene,
   block: BlockScene,
-  done: DoneScene
+  gallery: GalleryScene,
+  results: ResultsScene
 };
 
 const sceneTransitions = {
   intro: "training",
   training: "block",
-  block: "done",
+  block: "gallery",
+  gallery: "results",
 };
 
 
@@ -474,7 +513,4 @@ function update(timeScale)
   app.renderer.render(app.stage);
 }
 
-
-// Now start
-setup();
 

@@ -64,8 +64,28 @@
         <p id="gallery-instructions">Please choose the 5 most creative shapes you've collected</p>
         <button id="done-selection">Done</button>
       </div>
-      <div id="done-gui">
-        <h1>You're done</h1>
+      <div id="results-gui">
+        <h1>Results</h1>
+
+        <div class="bottom-text">
+          <p id="rapid-search-text" class="hidden"> 
+            Our study shows that creative search is a trade-off between novelty and value. 
+            <br>Your playing method suggests that you are <span class="highlight"><span class="searchScorePercent highlight"></span>%</span> more inclined toward <span class="highlight">rapid and spreading</span>
+            searches which result in higher visual novelty. 
+            In this kind of search, players tend to move rapidly between shapes, creating many shapes which spread across many different visual categories. 
+            This search strategy usually produces shapes that are more unique in our game.
+          </p>
+          <p id="focused-search-text" class="hidden">
+            Our study shows that creative search is a trade-off between novelty and value.
+            <br>Your playing method suggests that you are <span class="highlight"><span class="searchScorePercent highlight"></span>%</span> inclined toward <span class="highlight">focused and thoughtful searches</span> which result in higher visual value. 
+            In this kind of search, players tend to focus on each visual category they discover, collecting thoughtfully
+            shapes at increasing visual consensus. 
+            This search strategy usually produces shapes that carry more meaning in our game.
+          </p>
+
+          <p><br>Your game ID is: <br><br><span class="code" id="code"></span></p>
+        </div>
+
       </div>
     </div>
   </div>
