@@ -110,20 +110,13 @@ class TrainingScene extends Entity {
   }
 }
 
-/*
-transformers.rgbColorString(
-  transformers.cyclicInterpolate(
-    memory.constants.highlightedBlockColor, 
-    memory.constants.blockColor, 
-    (memory.frameCounter % memory.constants.dragHighlightPeriod) / memory.constants.dragHighlightPeriod))
-*/
-
 
 class BlockScene extends Entity {
   setup() {
     this.done = false;
     this.draggingBlock = null;
     this.highlightedBlocks = new Set();
+    this.targetBlockContainerPosition = new PIXI.Point();
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -186,6 +179,11 @@ class BlockScene extends Entity {
       const color = cyclicLerpColor(BLOCK_COLOR, HIGHLIGHTED_BLOCK_COLOR, 
         (timeSinceStart % DRAG_HIGHLIGHT_PERIOD) / DRAG_HIGHLIGHT_PERIOD);
       drawBlock(block, color);
+    }
+
+    if(distanceBetween(this.targetBlockContainerPosition, this.blocksContainer.position) > 1)
+    {
+      this.blocksContainer.position = lerp(this.blocksContainer.position, this.targetBlockContainerPosition, 0.5);
     }
   }
 
@@ -252,12 +250,17 @@ class BlockScene extends Entity {
   }
 
   updateBlocks() {
-    this.repositionBlocks();
+    this.updateTargetBlockContainerPosition();
     this.updateBlockInteractivity();
   }
 
-  repositionBlocks() {
-    centerContainer(this.blocksContainer, new PIXI.Point(app.view.width / 2, app.view.height / 2));
+  updateTargetBlockContainerPosition() {
+    const centerPos = new PIXI.Point(app.view.width / 2, app.view.height / 2);
+    const oldBlockPositions = this.blocksContainer.children.map(c => c.position);
+    const minBlockPos = min.apply(null, oldBlockPositions);
+    const maxBlockPos = max.apply(null, oldBlockPositions);
+    const blockCenterPos = average(minBlockPos, maxBlockPos);
+    this.targetBlockContainerPosition = subtract(centerPos, blockCenterPos);
   }
 
   updateBlockInteractivity() {
