@@ -59,6 +59,16 @@
       <div id="blocks-gui">
         <button id="add-shape">Collect Shape</button>
         <br><button id="done-adding">End Game</button>
+
+        <p id="end-early-message" class="hidden">You need to collect at least 5 shapes to move to the next step</p>
+
+        <div id="modal-confirm-done" class="hidden">
+          <div id="modal-confirm-box">
+          <p>Are you sure you want to end now?</p>
+          <button id="modal-confirm-cancel-button">Return to game</button>
+          <button id="modal-confirm-done-button">End game</button>
+          </div>
+      </div>
       </div>
       <div id="selection-gui">
         <p id="gallery-instructions">Please choose the 5 most creative shapes you've collected</p>

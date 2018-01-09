@@ -109,6 +109,46 @@ p {
   color: white;
 }
 
+#modal-confirm-done {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  pointer-events: all;
+}
+
+#modal-confirm-box {
+  position: absolute;
+  width: 320px;
+  height: 110px;
+  top: 25%;
+  left: 25%;
+  padding: 57px;
+  
+  background-color: white;
+}
+
+#modal-confirm-box p {
+  color: black;
+}
+
+#modal-confirm-cancel-button {
+  font-size: 0.7em;
+  margin-top: -5px;
+  width: 150px;
+  background-color: grey;
+  color: white;
+}
+
+#end-early-message {
+  text-align: right;
+  margin-right: 10px;
+  margin-top: 450px;
+  color: orange;
+}
+
 /*
 
 #gameContent {

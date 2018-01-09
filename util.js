@@ -145,6 +145,31 @@ function centerContainer(container, centerPos) {
   container.position = offset;
 }
 
+/*function lerpVector(start, end, fraction) {
+  return _.map(_.zip(start, end), function (pair) {
+    return pair[0] + fraction * (pair[1] - pair[0]);
+  });
+}
+
+function cyclicLerpVector(start, end, fraction) {
+  return fraction < 0.5 ? lerpVector(start, end, fraction / 0.5) : lerpVector(end, start, (fraction - 0.5) / 0.5);
+}
+
+function colorArrayToNumber(colorArray) {
+  return colorArray[0] << 16 | colorArray[1] << 8 | colorArray[2];
+}*/
+
+function lerpColor(start, end, fraction) {
+  const r = ((end & 0xff0000) >> 16) - ((start & 0xff0000) >> 16);
+  const g = ((end & 0x00ff00) >> 8) - ((start & 0x00ff00) >> 8);
+  const b = (end & 0x0000ff) - (start & 0x0000ff);
+  return start + ((r * fraction) << 16) + ((g * fraction) << 8) + b;
+}
+
+function cyclicLerpColor(start, end, fraction) {
+  return fraction < 0.5 ? lerpColor(start, end, fraction / 0.5) : lerpColor(end, start, (fraction - 0.5) / 0.5);
+}
+
 
 class Entity extends PIXI.utils.EventEmitter {
   setup() {}

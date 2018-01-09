@@ -1,5 +1,9 @@
 const EPSILON = 0.001;
 const BLOCK_WIDTH = 50;
+const MAX_SEARCH_TIME = 12 * 60 * 1000;
+const BLOCK_COLOR = 0x81e700;
+const HIGHLIGHTED_BLOCK_COLOR = 0x59853b;
+const DRAG_HIGHLIGHT_PERIOD = 500;
 
 let galleryShapes = [];
 let searchScore = 0.33;
@@ -14,12 +18,16 @@ function pixelPosToGridPos(pixelPos) {
   return round(divide(pixelPos, BLOCK_WIDTH));
 }  
 
+function drawBlock(graphics, fillColor) {
+  graphics.beginFill(fillColor);
+  graphics.lineStyle(4, 0x000000, 1);
+  graphics.drawRect(-BLOCK_WIDTH/2, -BLOCK_WIDTH/2, BLOCK_WIDTH, BLOCK_WIDTH);
+  graphics.endFill();
+}
+
 function makeBlockShape(gridPos) {
   let rect = new PIXI.Graphics();
-  rect.beginFill(0x00FF00);
-  rect.lineStyle(4, 0x000000, 1);
-  rect.drawRect(-BLOCK_WIDTH/2, -BLOCK_WIDTH/2, BLOCK_WIDTH, BLOCK_WIDTH);
-  rect.endFill();
+  drawBlock(rect, BLOCK_COLOR);
 
   rect.position = gridPosToPixelPos(gridPos);
   return rect;
@@ -94,6 +102,14 @@ class TrainingScene extends Entity {
   }
 }
 
+/*
+transformers.rgbColorString(
+  transformers.cyclicInterpolate(
+    memory.constants.highlightedBlockColor, 
+    memory.constants.blockColor, 
+    (memory.frameCounter % memory.constants.dragHighlightPeriod) / memory.constants.dragHighlightPeriod))
+*/
+
 
 class BlockScene extends Entity {
   setup() {
@@ -127,7 +143,7 @@ class BlockScene extends Entity {
 
     const galleryBg = new PIXI.Graphics();
     galleryBg.beginFill(0x808080);
-    galleryBg.lineColor = "0xffffff";
+    galleryBg.lineColor = 0xffffff;
     galleryBg.lineWidth = 1;
     galleryBg.drawRect(0, 0, 150, 150);
     galleryBg.endFill();
@@ -145,7 +161,23 @@ class BlockScene extends Entity {
     // HTML
     document.getElementById("blocks-gui").style.display = "block";
     document.getElementById("add-shape").addEventListener("click", this.onAddShape.bind(this));
-    document.getElementById("done-adding").addEventListener("click", this.onDoneAdding.bind(this));
+    document.getElementById("done-adding").addEventListener("click", this.onAttemptDone.bind(this));
+    document.getElementById("modal-confirm-cancel-button").addEventListener("click", this.cancelModal.bind(this));
+    document.getElementById("modal-confirm-done-button").addEventListener("click", this.confirmDone.bind(this));
+  }
+
+  update(timeSinceStart) {
+    if(timeSinceStart > MAX_SEARCH_TIME) {
+      this.confirmDone();
+      return;
+    }
+
+    // Animate dragging block
+    if(this.draggingBlock) {
+      const color = cyclicLerpColor(BLOCK_COLOR, HIGHLIGHTED_BLOCK_COLOR, 
+        (timeSinceStart % DRAG_HIGHLIGHT_PERIOD) / DRAG_HIGHLIGHT_PERIOD);
+      drawBlock(this.draggingBlock, color);
+    }
   }
 
   teardown() {
@@ -170,8 +202,11 @@ class BlockScene extends Entity {
 
 
     this.dropBlock(this.draggingBlock, this.draggingBlock.position);
+    drawBlock(this.draggingBlock, BLOCK_COLOR);
     this.draggingBlock = null;
     this.updateBlocks();
+
+    document.getElementById("add-shape").disabled = false;
 
     this.emit("droppedBlock");
   }
@@ -273,10 +308,24 @@ class BlockScene extends Entity {
     galleryShapes.push(galleryShape);
     this.updateGalleryShape(galleryShape);
 
+    document.getElementById("end-early-message").style.display = "none";
+    document.getElementById("add-shape").disabled = true;
+
     this.emit("addedShape");
   }
 
-  onDoneAdding() {
+  onAttemptDone() {
+    if(galleryShapes.length < 5) 
+      document.getElementById("end-early-message").style.display = "block";
+    else
+      document.getElementById("modal-confirm-done").style.display = "block";
+  }
+
+  cancelModal() {
+    document.getElementById("modal-confirm-done").style.display = "none";
+  }
+
+  confirmDone() {
     this.done = true;
 
     searchScore = calculateSearchScore()
@@ -374,7 +423,7 @@ class ResultsScene extends Entity {
     this.container.addChild(slider);
 
     const ball = new PIXI.Graphics();
-    ball.beginFill("0x2CC62C");
+    ball.beginFill(0x2CC62C);
     ball.drawCircle(app.renderer.width / 2 + searchScore * 255, 120, 10);
     this.container.addChild(ball);
 
