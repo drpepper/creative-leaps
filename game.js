@@ -73,6 +73,10 @@ class TrainingScene extends Entity {
     document.getElementById("done-training-4").addEventListener("click", e => this.done = true);
   }
 
+  update(timeSinceStart) {
+    this.blockScene.update(timeSinceStart);
+  }
+
   teardown() {
     document.getElementById("done-adding").style.display = "block";
     this.blockScene.teardown();
@@ -87,9 +91,13 @@ class TrainingScene extends Entity {
     this.didDropBlock = true;
     document.getElementById("training-1").style.display = "none";
     document.getElementById("training-2").style.display = "block";
+
+    this.blockScene.highlightMovableBlocks();
   }
 
   onDonePart2() {
+    this.blockScene.unhighlightMovableBlocks();
+
     document.getElementById("training-2").style.display = "none";
     document.getElementById("training-3").style.display = "block";
 
@@ -115,6 +123,7 @@ class BlockScene extends Entity {
   setup() {
     this.done = false;
     this.draggingBlock = null;
+    this.highlightedBlocks = new Set();
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -172,11 +181,11 @@ class BlockScene extends Entity {
       return;
     }
 
-    // Animate dragging block
-    if(this.draggingBlock) {
+    // Animate highlighted blocks
+    for(const block of this.highlightedBlocks) {
       const color = cyclicLerpColor(BLOCK_COLOR, HIGHLIGHTED_BLOCK_COLOR, 
         (timeSinceStart % DRAG_HIGHLIGHT_PERIOD) / DRAG_HIGHLIGHT_PERIOD);
-      drawBlock(this.draggingBlock, color);
+      drawBlock(block, color);
     }
   }
 
@@ -187,6 +196,27 @@ class BlockScene extends Entity {
 
   requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
 
+  highlightMovableBlocks() {
+    for(const blockGraphic of this.blocksContainer.children) {
+      if(this.canMoveBlock(pixelPosToGridPos(blockGraphic.position))) {
+        this.highlightedBlocks.add(blockGraphic);
+      }
+    }
+  }
+
+  unhighlightMovableBlocks() {
+    for(const blockGraphic of this.blocksContainer.children) {
+      if(this.canMoveBlock(pixelPosToGridPos(blockGraphic.position))) {
+        this.unhighlightBlock(blockGraphic);
+      }
+    }
+  }
+
+  unhighlightBlock(blockGraphic) {
+    this.highlightedBlocks.delete(blockGraphic);
+    drawBlock(blockGraphic, BLOCK_COLOR);
+  }
+
   onPointerDown(e) {
     this.draggingBlock = e.currentTarget;
 
@@ -195,6 +225,8 @@ class BlockScene extends Entity {
 
     const gridPos = pixelPosToGridPos(this.draggingBlock.position);
     this.blockGrid = removeFromArray(this.blockGrid, gridPos);
+
+    this.highlightedBlocks.add(this.draggingBlock);
   }
 
   onPointerUp(e) {
@@ -202,7 +234,9 @@ class BlockScene extends Entity {
 
 
     this.dropBlock(this.draggingBlock, this.draggingBlock.position);
-    drawBlock(this.draggingBlock, BLOCK_COLOR);
+
+    this.unhighlightBlock(this.draggingBlock);
+
     this.draggingBlock = null;
     this.updateBlocks();
 
