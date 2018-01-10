@@ -4,10 +4,7 @@ const MAX_SEARCH_TIME = 12 * 60 * 1000;
 const BLOCK_COLOR = 0x81e700;
 const HIGHLIGHTED_BLOCK_COLOR = 0x59853b;
 const DRAG_HIGHLIGHT_PERIOD = 500;
-
-let galleryShapes = [];
-let searchScore = 0.33;
-let redmetricsId = "12345";
+const RED_METRICS_GAME_VERSION = "0b0986f3-9119-4d90-82fb-20ee4842da69";
 
 
 function gridPosToPixelPos(gridPos) {
@@ -33,8 +30,75 @@ function makeBlockShape(gridPos) {
   return rect;
 }
 
+function convertShapeToArray(shape) {
+  return shape.map(({x, y}) => [x, y]);
+}
+
+function pointToArray(p) {
+  return [p.x, p.y];
+}
+
 function calculateSearchScore(shapeCount, timePlayed) {
   return Math.min(2 * ((1/88) * shapeCount * (720000 / timePlayed) - 0.5), 1);
+}
+
+function requestFullScreen(element) {
+  if(element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if(element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if(element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if(element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
+}
+
+function loadProgressHandler(loader, resource) {
+  console.log("loading: " + resource.url); 
+  console.log("progress: " + loader.progress + "%"); 
+}
+
+function setup() {
+  sceneLayer = new PIXI.Container();
+  app.stage.addChild(sceneLayer);
+
+  app.ticker.add(update);
+
+  redmetricsConnection.postEvent({
+    type: "start"
+  });
+
+  // Start scene
+  changeScene(getStartingScene(defaultStartingScene));
+}
+
+function changeScene(newSceneName) {
+  if(currentScene) currentScene.teardown();
+
+  currentSceneName = newSceneName;  
+  currentScene = new scenes[currentSceneName];
+
+  sceneStartedAt = Date.now();
+  currentScene.setup();
+  currentScene.update(0);
+
+  redmetricsConnection.postEvent({
+    type: metricsStartSceneEvents[newSceneName]
+  });
+}
+
+function update(timeScale)
+{
+  const timeSinceStart = Date.now() - sceneStartedAt;
+  currentScene.update(timeSinceStart, timeScale);
+
+  const requestedTransition = currentScene.requestedTransition(timeSinceStart);
+  if(requestedTransition != null) {
+      const nextSceneName = provideNextScene(sceneTransitions, currentSceneName, requestedTransition);
+      if(nextSceneName != null) changeScene(nextSceneName);
+  }
+  app.renderer.render(app.stage);
 }
 
 
@@ -115,8 +179,11 @@ class BlockScene extends Entity {
   setup() {
     this.done = false;
     this.draggingBlock = null;
+    this.draggingBlockStartGridPosition = null;
+    this.startDragTime = null;
     this.highlightedBlocks = new Set();
     this.targetBlockContainerPosition = new PIXI.Point();
+    this.lastMouseUpTime = 0;
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -217,6 +284,8 @@ class BlockScene extends Entity {
 
   onPointerDown(e) {
     this.draggingBlock = e.currentTarget;
+    this.draggingBlockStartGridPosition = pixelPosToGridPos(this.draggingBlock.position);
+    this.startDragTime = Date.now();
 
     // Reorder so this block is on top
     this.blocksContainer.setChildIndex(this.draggingBlock, this.blocksContainer.children.length - 1);
@@ -229,7 +298,6 @@ class BlockScene extends Entity {
 
   onPointerUp(e) {
     if(!this.draggingBlock) return;
-
 
     this.dropBlock(this.draggingBlock, this.draggingBlock.position);
 
@@ -282,6 +350,17 @@ class BlockScene extends Entity {
     
     block.position = gridPosToPixelPos(closestGridPos);
     this.blockGrid.push(closestGridPos);
+
+    this.lastMouseUpTime = Date.now();
+    redmetricsConnection.postEvent({
+      type: "movedBlock",
+      customData: {
+        startPosition: pointToArray(this.draggingBlockStartGridPosition),
+        endPosition: pointToArray(closestGridPos),
+        time: Date.now() - this.startDragTime,
+        newShape: convertShapeToArray(this.blockGrid)
+      }
+    });
   }
 
   findFreeGridPositions() {
@@ -347,6 +426,14 @@ class BlockScene extends Entity {
 
     document.getElementById("end-early-message").style.display = "none";
     document.getElementById("add-shape").disabled = true;
+
+    redmetricsConnection.postEvent({
+      type: "added shape to gallery",
+      customData: {
+        shape: convertShapeToArray(this.blockGrid),
+        timeSinceLastMouseUp: Date.now() - this.lastMouseUpTime
+      }
+    });
 
     this.emit("addedShape");
   }
@@ -462,6 +549,15 @@ class GalleryScene extends Entity {
     shape.endFill();
 
     this.updateDoneButton();
+
+    redmetricsConnection.postEvent({
+      type: "selected shape",
+      customData: {
+        shapeIndex: shapeIndex,
+        shape: convertShapeToArray(galleryShapes[shapeIndex]),
+        isSelected: isSelected,
+      }
+    });
   }
 
   updateDoneButton() {
@@ -506,60 +602,14 @@ class ResultsScene extends Entity {
       el.innerText = searchScorePercent;
     }
 
-    document.getElementById("code").innerText = redmetricsId;
+    document.getElementById("code").innerText = redmetricsConnection.playerId ? 
+      redmetricsConnection.playerId.substr(-8) : "Unknown";
   }
 
   teardown() {
     document.getElementById("results-gui").style.display = "none";
     sceneLayer.removeChild(this.container);
   }  
-}
-
-
-const app = new PIXI.Application({
-  width: 960,
-  height: 540,
-  view: document.getElementById("pixi-canvas")
-});
-
-
-app.loader
-  .add(["images/slider.png"])
-  .on("progress", loadProgressHandler)
-  .load(setup);
-
-
-// // Scale canvas on 
-// scaleToWindow(app.view);
-
-// window.addEventListener("resize", function(event){ 
-//   scaleToWindow(app.view);
-// });
-
-// Doesn't work on fullscreen
-
-//document.addEventListener("fullscreenchange", function( event ) { scaleToWindow(app.view); });
-
-// var requestFullScreen = document.documentElement.requestFullscreen || 
-//   document.documentElement.mozRequestFullScreen || 
-//   document.documentElement.webkitRequestFullscreen ||
-//   document.documentElement.msRequestFullscreen;
-
-function requestFullScreen(element) {
-  if(element.requestFullscreen) {
-    element.requestFullscreen();
-  } else if(element.mozRequestFullScreen) {
-    element.mozRequestFullScreen();
-  } else if(element.webkitRequestFullscreen) {
-    element.webkitRequestFullscreen();
-  } else if(element.msRequestFullscreen) {
-    element.msRequestFullscreen();
-  }
-}
-
-function loadProgressHandler(loader, resource) {
-  console.log("loading: " + resource.url); 
-  console.log("progress: " + loader.progress + "%"); 
 }
 
 
@@ -578,53 +628,72 @@ const sceneTransitions = {
   gallery: "results",
 };
 
+const metricsStartSceneEvents = {
+  intro: "startIntro",
+  training: "startTutorial",
+  block: "startSearch",
+  gallery: "end search",
+  results: "startFeedback"
+};
 
+let galleryShapes = [];
+let searchScore = 0.33;
+let redmetricsConnection;
 const defaultStartingScene = "intro";
-
 let sceneLayer;
-
-function setup() {
-  sceneLayer = new PIXI.Container();
-  app.stage.addChild(sceneLayer);
-
-  app.ticker.add(update);
-
-  // Start scene
-  changeScene(getStartingScene(defaultStartingScene));
-}
-
 let currentScene;
 let currentSceneName;
 let sceneStartedAt = 0;
 
-function changeScene(newSceneName) {
-  if(currentScene) currentScene.teardown();
 
-  currentSceneName = newSceneName;  
-  currentScene = new scenes[currentSceneName];
+const app = new PIXI.Application({
+  width: 960,
+  height: 540,
+  view: document.getElementById("pixi-canvas")
+});
 
-  sceneStartedAt = Date.now();
-  currentScene.setup();
-  currentScene.update(0);
-}
+app.loader
+  .add(["images/slider.png"])
+  .on("progress", loadProgressHandler)
+  .load(setup);
 
-function update(timeScale)
-{
-  const timeSinceStart = Date.now() - sceneStartedAt;
-  currentScene.update(timeSinceStart, timeScale);
+// Load RedMetrics
+const url = new URL(document.location);
+redmetricsConnection = redmetrics.prepareWriteConnection({ 
+  gameVersionId: RED_METRICS_GAME_VERSION,
+  player: {
+    expId: url.searchParams.get("expId") || url.searchParams.get("expID"),
+    userId: url.searchParams.get("userId") || url.searchParams.get("userID"),
+    userAgent: navigator.userAgent
+  } 
+});
+redmetricsConnection.connect().then(function() {
+  console.log("Connected to the RedMetrics server");
+});
 
-  const requestedTransition = currentScene.requestedTransition(timeSinceStart);
-  if(requestedTransition != null) {
-      const nextSceneName = provideNextScene(sceneTransitions, currentSceneName, requestedTransition);
-      if(nextSceneName != null) changeScene(nextSceneName);
-  }
-  app.renderer.render(app.stage);
-}
 
-// Debugging code
-for(let i = 0; i < 120; i++) {
-  galleryShapes.push([{"x":1,"y":0},{"x":2,"y":0},{"x":3,"y":0},{"x":4,"y":0},{"x":5,"y":0},{"x":6,"y":0},{"x":7,"y":0},{"x":8,"y":0},{"x":9,"y":0},{"x":1,"y":-1}]);
-}
+// // Scale canvas on 
+// scaleToWindow(app.view);
+
+// window.addEventListener("resize", function(event){ 
+//   scaleToWindow(app.view);
+// });
+
+// Doesn't work on fullscreen
+
+//document.addEventListener("fullscreenchange", function( event ) { scaleToWindow(app.view); });
+
+// var requestFullScreen = document.documentElement.requestFullscreen || 
+//   document.documentElement.mozRequestFullScreen || 
+//   document.documentElement.webkitRequestFullscreen ||
+//   document.documentElement.msRequestFullscreen;
+
+
+
+// // Debugging code
+// for(let i = 0; i < 120; i++) {
+//   galleryShapes.push([{"x":1,"y":0},{"x":2,"y":0},{"x":3,"y":0},{"x":4,"y":0},{"x":5,"y":0},{"x":6,"y":0},{"x":7,"y":0},{"x":8,"y":0},{"x":9,"y":0},{"x":1,"y":-1}]);
+// }
 
 
 
