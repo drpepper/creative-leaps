@@ -149,6 +149,18 @@ p {
   color: orange;
 }
 
+#previous-page-button {
+    position: absolute;
+    top: 505px;
+    left: 30px;
+}
+
+#next-page-button {
+    position: absolute;
+    top: 505px;
+    right: 40px;
+}
+
 /*
 
 #gameContent {

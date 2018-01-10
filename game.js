@@ -378,23 +378,40 @@ class BlockScene extends Entity {
 
 class GalleryScene extends Entity {
   setup() {
+    const ROWS = 5;
+    const COLS = 10;
+    const ITEMS_PER_PAGE = ROWS * COLS
+
     this.done = false;
     this.selectedIndexes = [];
+    this.pageNumber = 0;
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
 
+    this.pages = new PIXI.Container();
+    this.container.addChild(this.pages);
+
+    let pageContainer;
     for(let i = 0; i < galleryShapes.length; i++) {
-      const row = Math.floor(i / 9); 
-      const col = Math.floor(i % 9);
-      const galleryShapeCenter = new PIXI.Point(60 + col * 100, 80 + row * 100);
+      const page = Math.floor(i / ITEMS_PER_PAGE);
+      const row = Math.floor((i % ITEMS_PER_PAGE) / COLS); 
+      const col = Math.floor((i % ITEMS_PER_PAGE) % COLS);
+
+      // Make new page if necessary
+      if(i % (ROWS * COLS) == 0) {
+        pageContainer = new PIXI.Container();
+        pageContainer.visible = false;
+        this.pages.addChild(pageContainer);
+      }
+      const galleryShapeCenter = new PIXI.Point(70 + col * 90, 90 + row * 90);
 
       const galleryBg = new PIXI.Graphics();
       galleryBg.beginFill(0x333333);
       galleryBg.drawRect(-40, -40, 80, 80);
       galleryBg.endFill();
       galleryBg.position = galleryShapeCenter;
-      this.container.addChild(galleryBg);
+      pageContainer.addChild(galleryBg);
 
       galleryBg.on("pointerdown", e => this.onToggleShape(galleryBg, i));
       galleryBg.buttonMode = true;
@@ -403,20 +420,24 @@ class GalleryScene extends Entity {
       const galleryParent = new PIXI.Container();
       galleryParent.position = galleryShapeCenter;
       galleryParent.scale.set(0.1);
-      this.container.addChild(galleryParent);
+      pageContainer.addChild(galleryParent);
 
       const galleryLayer = new PIXI.Container();
       for(let block of galleryShapes[i])
         galleryLayer.addChild(makeBlockShape(block));
       centerContainer(galleryLayer, new PIXI.Point());
       galleryParent.addChild(galleryLayer);
-
-      // HTML
-      document.getElementById("selection-gui").style.display = "block";
-      document.getElementById("done-selection").addEventListener("click", e => this.done = true);
-
-      this.updateDoneButton();
     }
+
+    // HTML
+    document.getElementById("selection-gui").style.display = "block";
+    document.getElementById("done-selection").addEventListener("click", e => this.done = true);
+    document.getElementById("previous-page-button").addEventListener("click", e => this.changePage(this.pageNumber - 1));
+    document.getElementById("next-page-button").addEventListener("click", e => this.changePage(this.pageNumber + 1));
+
+    this.updateDoneButton();
+
+    this.changePage(0);
   }
 
   update(timeSinceStart) {
@@ -444,7 +465,16 @@ class GalleryScene extends Entity {
   }
 
   updateDoneButton() {
-    document.getElementById("done-selection").style.display = this.selectedIndexes.length == 5 ? "block" : "none";
+    document.getElementById("done-selection").disabled = this.selectedIndexes.length != 5;
+  }
+
+  changePage(newPageNumber) {
+    this.pages.children[this.pageNumber].visible = false;
+
+    this.pageNumber = newPageNumber;
+    this.pages.children[this.pageNumber].visible = true;
+    document.getElementById("previous-page-button").disabled = this.pageNumber == 0;
+    document.getElementById("next-page-button").disabled = this.pageNumber == (this.pages.children.length - 1);
   }
 }
 
@@ -528,17 +558,9 @@ function requestFullScreen(element) {
 }
 
 function loadProgressHandler(loader, resource) {
-  //Display the file `url` currently being loaded
   console.log("loading: " + resource.url); 
-
-  //Display the precentage of files currently loaded
   console.log("progress: " + loader.progress + "%"); 
-
-  //If you gave your files names as the first argument 
-  //of the `add` method, you can access them like this
-  //console.log("loading: " + resource.name);
 }
-
 
 
 const scenes = {
@@ -598,5 +620,11 @@ function update(timeScale)
   }
   app.renderer.render(app.stage);
 }
+
+// Debugging code
+for(let i = 0; i < 120; i++) {
+  galleryShapes.push([{"x":1,"y":0},{"x":2,"y":0},{"x":3,"y":0},{"x":4,"y":0},{"x":5,"y":0},{"x":6,"y":0},{"x":7,"y":0},{"x":8,"y":0},{"x":9,"y":0},{"x":1,"y":-1}]);
+}
+
 
 
