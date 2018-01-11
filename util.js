@@ -145,20 +145,6 @@ function centerContainer(container, centerPos) {
   container.position = offset;
 }
 
-/*function lerpVector(start, end, fraction) {
-  return _.map(_.zip(start, end), function (pair) {
-    return pair[0] + fraction * (pair[1] - pair[0]);
-  });
-}
-
-function cyclicLerpVector(start, end, fraction) {
-  return fraction < 0.5 ? lerpVector(start, end, fraction / 0.5) : lerpVector(end, start, (fraction - 0.5) / 0.5);
-}
-
-function colorArrayToNumber(colorArray) {
-  return colorArray[0] << 16 | colorArray[1] << 8 | colorArray[2];
-}*/
-
 function lerpColor(start, end, fraction) {
   const r = ((end & 0xff0000) >> 16) - ((start & 0xff0000) >> 16);
   const g = ((end & 0x00ff00) >> 8) - ((start & 0x00ff00) >> 8);
@@ -168,6 +154,19 @@ function lerpColor(start, end, fraction) {
 
 function cyclicLerpColor(start, end, fraction) {
   return fraction < 0.5 ? lerpColor(start, end, fraction / 0.5) : lerpColor(end, start, (fraction - 0.5) / 0.5);
+}
+
+function resizeGame() {
+  const parentSize = new PIXI.Point(window.innerWidth, window.innerHeight);
+  const scale = Math.min(parentSize.x / app.renderer.width, parentSize.y / app.renderer.height).toFixed(2);
+
+  const newSize = new PIXI.Point(scale * app.renderer.width, scale * app.renderer.height);
+  const remainingSpace = new PIXI.Point(parentSize.x - newSize.x, parentSize.y - newSize.y);
+
+  console.log("setting scale to", scale);
+
+  document.getElementById("game-container").style.transform = 
+    `scale(${scale}) translate(${(remainingSpace.x / 2).toFixed(2)}px, ${(remainingSpace.y / 2).toFixed(2)}px)`;
 }
 
 

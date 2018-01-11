@@ -69,6 +69,9 @@ function setup() {
     type: "start"
   });
 
+  // document.getElementById("fullscreen-button").addEventListener("click", 
+  //   e => requestFullScreen(document.getElementById("game-container")));
+
   // Start scene
   changeScene(getStartingScene(defaultStartingScene));
 }
@@ -671,24 +674,9 @@ redmetricsConnection.connect().then(function() {
   console.log("Connected to the RedMetrics server");
 });
 
-
-// // Scale canvas on 
-// scaleToWindow(app.view);
-
-// window.addEventListener("resize", function(event){ 
-//   scaleToWindow(app.view);
-// });
-
-// Doesn't work on fullscreen
-
-//document.addEventListener("fullscreenchange", function( event ) { scaleToWindow(app.view); });
-
-// var requestFullScreen = document.documentElement.requestFullscreen || 
-//   document.documentElement.mozRequestFullScreen || 
-//   document.documentElement.webkitRequestFullscreen ||
-//   document.documentElement.msRequestFullscreen;
-
-
+// Resize
+resizeGame();
+window.addEventListener("resize", resizeGame);
 
 // // Debugging code
 // for(let i = 0; i < 120; i++) {
