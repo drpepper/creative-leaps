@@ -12,6 +12,8 @@
     "url-search-params-polyfill": "^2.0.2"
   },
   "scripts": {
+    "build": "browserify game.js -o bundle.js -t [ babelify --presets [ env ] ]",
+    "watch": "browserify game.js -o bundle.js -t [ babelify --presets [ env ] ]",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
