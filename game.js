@@ -1,3 +1,4 @@
+import "babel-polyfill";
 const util = require("./util.js");
 import "url-search-params-polyfill";
 

@@ -3,7 +3,7 @@
 Install
 
 npm install
-npm install -g browserify watchify
+npm install -g browserify watchify uglify-js
 
 
 To compile
