@@ -36,8 +36,6 @@ p {
 
 #game-container {
   position: relative;
-  width: 960px;
-  height: 540px;
 
   transform-origin: 0% 0%;
 

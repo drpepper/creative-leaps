@@ -1,3 +1,6 @@
+const util = require("./util.js");
+
+
 const EPSILON = 0.001;
 const BLOCK_WIDTH = 50;
 const MAX_SEARCH_TIME = 12 * 60 * 1000;
@@ -8,11 +11,11 @@ const RED_METRICS_GAME_VERSION = "0b0986f3-9119-4d90-82fb-20ee4842da69";
 
 
 function gridPosToPixelPos(gridPos) {
-  return multiply(gridPos, BLOCK_WIDTH);
+  return util.multiply(gridPos, BLOCK_WIDTH);
 }
 
 function pixelPosToGridPos(pixelPos) {
-  return round(divide(pixelPos, BLOCK_WIDTH));
+  return util.round(util.divide(pixelPos, BLOCK_WIDTH));
 }  
 
 function drawBlock(graphics, fillColor) {
@@ -73,7 +76,7 @@ function setup() {
   //   e => requestFullScreen(document.getElementById("game-container")));
 
   // Start scene
-  changeScene(getStartingScene(defaultStartingScene));
+  changeScene(util.getStartingScene(defaultStartingScene));
 }
 
 function changeScene(newSceneName) {
@@ -98,14 +101,14 @@ function update(timeScale)
 
   const requestedTransition = currentScene.requestedTransition(timeSinceStart);
   if(requestedTransition != null) {
-      const nextSceneName = provideNextScene(sceneTransitions, currentSceneName, requestedTransition);
+      const nextSceneName = util.provideNextScene(sceneTransitions, currentSceneName, requestedTransition);
       if(nextSceneName != null) changeScene(nextSceneName);
   }
   app.renderer.render(app.stage);
 }
 
 
-class IntroScene extends Entity {
+class IntroScene extends util.Entity {
   setup() {
     document.getElementById("intro-gui").style.display = "block";
 
@@ -121,7 +124,7 @@ class IntroScene extends Entity {
 }
 
 
-class TrainingScene extends Entity {
+class TrainingScene extends util.Entity {
   setup() {
     this.done = false;
     this.didDropBlock = false;
@@ -178,7 +181,7 @@ class TrainingScene extends Entity {
 }
 
 
-class BlockScene extends Entity {
+class BlockScene extends util.Entity {
   setup() {
     this.done = false;
     this.draggingBlock = null;
@@ -246,14 +249,14 @@ class BlockScene extends Entity {
 
     // Animate highlighted blocks
     for(const block of this.highlightedBlocks) {
-      const color = cyclicLerpColor(BLOCK_COLOR, HIGHLIGHTED_BLOCK_COLOR, 
+      const color = util.cyclicLerpColor(BLOCK_COLOR, HIGHLIGHTED_BLOCK_COLOR, 
         (timeSinceStart % DRAG_HIGHLIGHT_PERIOD) / DRAG_HIGHLIGHT_PERIOD);
       drawBlock(block, color);
     }
 
-    if(distanceBetween(this.targetBlockContainerPosition, this.blocksContainer.position) > 1)
+    if(util.distanceBetween(this.targetBlockContainerPosition, this.blocksContainer.position) > 1)
     {
-      this.blocksContainer.position = lerp(this.blocksContainer.position, this.targetBlockContainerPosition, 0.5);
+      this.blocksContainer.position = util.lerp(this.blocksContainer.position, this.targetBlockContainerPosition, 0.5);
     }
   }
 
@@ -294,7 +297,7 @@ class BlockScene extends Entity {
     this.blocksContainer.setChildIndex(this.draggingBlock, this.blocksContainer.children.length - 1);
 
     const gridPos = pixelPosToGridPos(this.draggingBlock.position);
-    this.blockGrid = removeFromArray(this.blockGrid, gridPos);
+    this.blockGrid = util.removeFromArray(this.blockGrid, gridPos);
 
     this.highlightedBlocks.add(this.draggingBlock);
   }
@@ -317,7 +320,7 @@ class BlockScene extends Entity {
   onPointerMove(e) {
     if(!this.draggingBlock) return;
 
-    this.draggingBlock.position = subtract(e.data.getLocalPosition(app.stage), this.blocksContainer.position);
+    this.draggingBlock.position = util.subtract(e.data.getLocalPosition(app.stage), this.blocksContainer.position);
   }
 
   updateBlocks() {
@@ -328,10 +331,10 @@ class BlockScene extends Entity {
   updateTargetBlockContainerPosition() {
     const centerPos = new PIXI.Point(app.view.width / 2, app.view.height / 2);
     const oldBlockPositions = this.blocksContainer.children.map(c => c.position);
-    const minBlockPos = min.apply(null, oldBlockPositions);
-    const maxBlockPos = max.apply(null, oldBlockPositions);
-    const blockCenterPos = average(minBlockPos, maxBlockPos);
-    this.targetBlockContainerPosition = subtract(centerPos, blockCenterPos);
+    const minBlockPos = util.min.apply(null, oldBlockPositions);
+    const maxBlockPos = util.max.apply(null, oldBlockPositions);
+    const blockCenterPos = util.average(minBlockPos, maxBlockPos);
+    this.targetBlockContainerPosition = util.subtract(centerPos, blockCenterPos);
   }
 
   updateBlockInteractivity() {
@@ -349,7 +352,7 @@ class BlockScene extends Entity {
     const gridPos = pixelPosToGridPos(droppedPos);
 
     const freeGridPositions = this.findFreeGridPositions();
-    const closestGridPos = _.min(freeGridPositions, freePos => distance(gridPos, freePos));
+    const closestGridPos = _.min(freeGridPositions, freePos => util.distance(gridPos, freePos));
     
     block.position = gridPosToPixelPos(closestGridPos);
     this.blockGrid.push(closestGridPos);
@@ -374,8 +377,8 @@ class BlockScene extends Entity {
       ret.push(new PIXI.Point(b.x, b.y - 1));
       ret.push(new PIXI.Point(b.x, b.y + 1));
     }
-    ret = uniq(ret);
-    return difference(ret, this.blockGrid);
+    ret = util.uniq(ret);
+    return util.difference(ret, this.blockGrid);
   }
 
   blocksAreNeighbors(a, b) {
@@ -416,14 +419,14 @@ class BlockScene extends Entity {
   }
 
   canMoveBlock(gridPos) {
-    let blocksWithout = removeFromArray(this.blockGrid, gridPos);
+    let blocksWithout = util.removeFromArray(this.blockGrid, gridPos);
     let adjList = this.makeAdjacencyList(blocksWithout);
     let visited = this.visitBlocks(adjList, [0]);
     return _.flatten(visited).length == blocksWithout.length;
   }
 
   onAddShape() {
-    const galleryShape = cloneData(this.blockGrid)
+    const galleryShape = util.cloneData(this.blockGrid)
     galleryShapes.push(galleryShape);
     this.updateGalleryShape(galleryShape);
 
@@ -462,11 +465,11 @@ class BlockScene extends Entity {
     this.galleryLayer.removeChildren();
     for(let block of galleryShape)
       this.galleryLayer.addChild(makeBlockShape(block));
-    centerContainer(this.galleryLayer, new PIXI.Point());
+    util.centerContainer(this.galleryLayer, new PIXI.Point());
   }
 }
 
-class GalleryScene extends Entity {
+class GalleryScene extends util.Entity {
   setup() {
     const ROWS = 5;
     const COLS = 10;
@@ -515,7 +518,7 @@ class GalleryScene extends Entity {
       const galleryLayer = new PIXI.Container();
       for(let block of galleryShapes[i])
         galleryLayer.addChild(makeBlockShape(block));
-      centerContainer(galleryLayer, new PIXI.Point());
+      util.centerContainer(galleryLayer, new PIXI.Point());
       galleryParent.addChild(galleryLayer);
     }
 
@@ -545,7 +548,7 @@ class GalleryScene extends Entity {
     const isSelected = !_.contains(this.selectedIndexes, shapeIndex);
 
     if(isSelected) this.selectedIndexes.push(shapeIndex);
-    else this.selectedIndexes = removeFromArray(this.selectedIndexes, shapeIndex); 
+    else this.selectedIndexes = util.removeFromArray(this.selectedIndexes, shapeIndex); 
     
     shape.beginFill(isSelected ? 0x9B2526 : 0x333333);
     shape.drawRect(-40, -40, 80, 80);
@@ -578,7 +581,7 @@ class GalleryScene extends Entity {
 }
 
 
-class ResultsScene extends Entity {
+class ResultsScene extends util.Entity {
   setup() {
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -639,6 +642,7 @@ const metricsStartSceneEvents = {
   results: "startFeedback"
 };
 
+
 let galleryShapes = [];
 let searchScore = 0.33;
 let redmetricsConnection;
@@ -675,8 +679,8 @@ redmetricsConnection.connect().then(function() {
 });
 
 // Resize
-resizeGame();
-window.addEventListener("resize", resizeGame);
+util.resizeGame(app);
+window.addEventListener("resize", () => util.resizeGame(app));
 
 // // Debugging code
 // for(let i = 0; i < 120; i++) {

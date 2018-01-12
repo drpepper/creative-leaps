@@ -1,26 +1,26 @@
 // UTILITY FUNCTIONS
 
-function makeSprite(name) { 
+module.exports.makeSprite = function(name) { 
   return new PIXI.Sprite(app.loader.resources[name].texture);
 }
 
-function clamp(x, min, max) {
+module.exports.clamp = function(x, min, max) {
   return Math.min(max, Math.max(min, x));
 }
 
-function distanceBetween(a, b) {
+module.exports.distanceBetween = function(a, b) {
   let x = a.x - b.x;
   let y = a.y - b.y;
   return Math.sqrt(x*x + y*y);
 }
 
-function lerp(a, b, p) {
+module.exports.lerp = function(a, b, p) {
   const x = b.x - a.x;
   const y = b.y - a.y;
   return new PIXI.Point(a.x + p * x, a.y + p * y);
 }
 
-function add(...points) {
+module.exports.add = function(...points) {
   const r = new PIXI.Point();
   for(p of points) {
     r.x += p.x;
@@ -29,7 +29,7 @@ function add(...points) {
   return r;
 }
 
-function subtract(...points) {
+module.exports.subtract = function(...points) {
   const r = new PIXI.Point(points[0].x, points[0].y);
   for(let i = 1; i < points.length; i++) {
     r.x -= points[i].x;
@@ -38,23 +38,23 @@ function subtract(...points) {
   return r;
 }
 
-function multiply(a, p) {
+module.exports.multiply = function(a, p) {
   return new PIXI.Point(a.x * p, a.y * p);
 }
 
-function divide(a, p) {
+module.exports.divide = function(a, p) {
   return new PIXI.Point(a.x / p, a.y / p);
 }
 
-function floor(p) {
+module.exports.floor = function(p) {
   return new PIXI.Point(Math.floor(p.x), Math.floor(p.y));
 }
 
-function round(p) {
+module.exports.round = function(p) {
   return new PIXI.Point(Math.round(p.x), Math.round(p.y));
 }
 
-function min(...points) {
+module.exports.min = function(...points) {
   const r = new PIXI.Point(Infinity, Infinity);
   for(p of points) {
     r.x = Math.min(p.x, r.x);
@@ -63,7 +63,7 @@ function min(...points) {
   return r;
 }
 
-function max(...points) {
+module.exports.max = function(...points) {
   const r = new PIXI.Point(-Infinity, -Infinity);
   for(p of points) {
     r.x = Math.max(p.x, r.x);
@@ -72,19 +72,19 @@ function max(...points) {
   return r;
 }
 
-function average(...points) {
+module.exports.average = function(...points) {
   var sum = new PIXI.Point();
-  for(let point of points) sum = add(sum, point);
-  return divide(sum, points.length);
+  for(let point of points) sum = module.exports.add(sum, point);
+  return module.exports.divide(sum, points.length);
 }
 
-function moveTowards(a, b, speed) {
-  const d = distanceBetween(a, b);
-  return lerp(a, b, clamp(speed / d, 0, 1));
+module.exports.moveTowards = function(a, b, speed) {
+  const d = module.exports.distanceBetween(a, b);
+  return module.exports.lerp(a, b, module.exports.clamp(speed / d, 0, 1));
 }
 
 // Test containment using isEqual
-function contains(list, p) {
+module.exports.contains = function(list, p) {
   for(let x of list) {
     if(_.isEqual(x, p)) return true;
   }
@@ -92,7 +92,7 @@ function contains(list, p) {
 } 
 
 // Test containment using isEqual
-function indexOf(list, p) {
+module.exports.indexOf = function(list, p) {
   for(let i = 0; i < list.length; i++) {
     if(_.isEqual(list[i], p)) return i;
   }
@@ -100,11 +100,11 @@ function indexOf(list, p) {
 } 
 
 // Find unique elements using isEqual
-function uniq(array) {
+module.exports.uniq = function(array) {
   let results = [];
   let seen = [];
   array.forEach((value, index) => {
-    if(!contains(seen, value)) {
+    if(!module.exports.contains(seen, value)) {
       seen.push(value)
       results.push(array[index])
     }
@@ -113,50 +113,40 @@ function uniq(array) {
 }
 
 // Like Underscore's method, but uses contains()
-function difference(array) {
+module.exports.difference = function(array) {
   rest = Array.prototype.concat.apply(Array.prototype, Array.prototype.slice.call(arguments, 1));
-  return _.filter(array, (value) => !contains(rest, value));
+  return _.filter(array, (value) => !module.exports.contains(rest, value));
 }
 
 // Uses contains()
-function removeFromArray(array, value) {
+module.exports.removeFromArray = function(array, value) {
   let ret = [];
   for(let element of array) if(!_.isEqual(element, value)) ret.push(element);
   return ret;
 }
 
-function distance(a, b) {
+module.exports.distance = function(a, b) {
   const x = a.x - b.x;
   const y = a.y - b.y;
   return Math.sqrt(x*x + y*y);
 }
 
-function cloneData(o) {
+module.exports.cloneData = function(o) {
   return JSON.parse(JSON.stringify(o));
 } 
 
-function centerContainer(container, centerPos) {
-  const oldBlockPositions = container.children.map(c => c.position);
-  const minBlockPos = min.apply(null, oldBlockPositions);
-  const maxBlockPos = max.apply(null, oldBlockPositions);
-  const blockCenterPos = average(minBlockPos, maxBlockPos);
-  const offset = subtract(centerPos, blockCenterPos);
-
-  container.position = offset;
-}
-
-function lerpColor(start, end, fraction) {
+module.exports.lerpColor = function(start, end, fraction) {
   const r = ((end & 0xff0000) >> 16) - ((start & 0xff0000) >> 16);
   const g = ((end & 0x00ff00) >> 8) - ((start & 0x00ff00) >> 8);
   const b = (end & 0x0000ff) - (start & 0x0000ff);
   return start + ((r * fraction) << 16) + ((g * fraction) << 8) + b;
 }
 
-function cyclicLerpColor(start, end, fraction) {
-  return fraction < 0.5 ? lerpColor(start, end, fraction / 0.5) : lerpColor(end, start, (fraction - 0.5) / 0.5);
+module.exports.cyclicLerpColor = function(start, end, fraction) {
+  return fraction < 0.5 ? module.exports.lerpColor(start, end, fraction / 0.5) : module.exports.lerpColor(end, start, (fraction - 0.5) / 0.5);
 }
 
-function resizeGame() {
+module.exports.resizeGame = function(app) {
   const parentSize = new PIXI.Point(window.innerWidth, window.innerHeight);
   const scale = Math.min(parentSize.x / app.renderer.width, parentSize.y / app.renderer.height).toFixed(2);
 
@@ -169,15 +159,36 @@ function resizeGame() {
     `scale(${scale}) translate(${(remainingSpace.x / 2).toFixed(2)}px, ${(remainingSpace.y / 2).toFixed(2)}px)`;
 }
 
+module.exports.getStartingScene = function(defaultScene) {
+  return new URL(document.location).searchParams.get("scene") || defaultScene;
+}
 
-class Entity extends PIXI.utils.EventEmitter {
+module.exports.provideNextScene = function(sceneTransitions, currentScene, requestedTransition) {
+  if(currentScene in sceneTransitions) return sceneTransitions[currentScene];
+
+  console.error("No transition from", currentScene, "with transition", requestedTransition);
+  return null;
+}
+
+module.exports.centerContainer = function(container, centerPos) {
+  const oldBlockPositions = container.children.map(c => c.position);
+  const minBlockPos = module.exports.min.apply(null, oldBlockPositions);
+  const maxBlockPos = module.exports.max.apply(null, oldBlockPositions);
+  const blockCenterPos = module.exports.average(minBlockPos, maxBlockPos);
+  const offset = module.exports.subtract(centerPos, blockCenterPos);
+
+  container.position = offset;
+}
+
+
+module.exports.Entity = class extends PIXI.utils.EventEmitter {
   setup() {}
   update(timeSinceStart, timeScale) {}
   teardown() {}
   requestedTransition(timeSinceStart) { return null; } // Provide string transition name, such as "next"
 }
 
-class StateMachine extends Entity {
+module.exports.StateMachine = class extends module.exports.Entity {
   constructor(states, transitions, startingState = "start", endingState = "end") {
     super();
 
@@ -229,7 +240,7 @@ class StateMachine extends Entity {
   }
 }
 
-class ParallelEntities extends Entity {
+module.exports.ParallelEntities = class extends module.exports.Entity {
   constructor() {
     super();
 
@@ -257,16 +268,5 @@ class ParallelEntities extends Entity {
   requestedTransition(timeSinceStart) { 
     return this.entities[0].requestedTransition(timeSinceStart);
   }
-}
-
-function getStartingScene(defaultScene) {
-  return new URL(document.location).searchParams.get("scene") || defaultScene;
-}
-
-function provideNextScene(sceneTransitions, currentScene, requestedTransition) {
-  if(currentScene in sceneTransitions) return sceneTransitions[currentScene];
-
-  console.error("No transition from", currentScene, "with transition", requestedTransition);
-  return null;
 }
 
