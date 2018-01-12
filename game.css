@@ -46,6 +46,8 @@ p {
   color: limegreen;
 
   text-align: center;
+
+  user-select: none;
 }
 
 #html-layer {
