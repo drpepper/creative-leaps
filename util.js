@@ -1,4 +1,6 @@
-// UTILITY FUNCTIONS
+import "babel-polyfill";
+import "url-search-params-polyfill";
+
 
 module.exports.makeSprite = function(name) { 
   return new PIXI.Sprite(app.loader.resources[name].texture);
@@ -22,7 +24,7 @@ module.exports.lerp = function(a, b, p) {
 
 module.exports.add = function(...points) {
   const r = new PIXI.Point();
-  for(p of points) {
+  for(let p of points) {
     r.x += p.x;
     r.y += p.y;
   } 
@@ -56,7 +58,7 @@ module.exports.round = function(p) {
 
 module.exports.min = function(...points) {
   const r = new PIXI.Point(Infinity, Infinity);
-  for(p of points) {
+  for(let p of points) {
     r.x = Math.min(p.x, r.x);
     r.y = Math.min(p.y, r.y);
   } 
@@ -65,7 +67,7 @@ module.exports.min = function(...points) {
 
 module.exports.max = function(...points) {
   const r = new PIXI.Point(-Infinity, -Infinity);
-  for(p of points) {
+  for(let p of points) {
     r.x = Math.max(p.x, r.x);
     r.y = Math.max(p.y, r.y);
   } 
@@ -114,7 +116,7 @@ module.exports.uniq = function(array) {
 
 // Like Underscore's method, but uses contains()
 module.exports.difference = function(array) {
-  rest = Array.prototype.concat.apply(Array.prototype, Array.prototype.slice.call(arguments, 1));
+  const rest = Array.prototype.concat.apply(Array.prototype, Array.prototype.slice.call(arguments, 1));
   return _.filter(array, (value) => !module.exports.contains(rest, value));
 }
 
@@ -160,7 +162,8 @@ module.exports.resizeGame = function(app) {
 }
 
 module.exports.getStartingScene = function(defaultScene) {
-  return new URL(document.location).searchParams.get("scene") || defaultScene;
+  const searchParams = new URLSearchParams(window.location.search);
+  return searchParams.get("scene") || defaultScene;
 }
 
 module.exports.provideNextScene = function(sceneTransitions, currentScene, requestedTransition) {

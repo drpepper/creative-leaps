@@ -1,4 +1,5 @@
 const util = require("./util.js");
+import "url-search-params-polyfill";
 
 
 const EPSILON = 0.001;
@@ -665,12 +666,12 @@ app.loader
   .load(setup);
 
 // Load RedMetrics
-const url = new URL(document.location);
+const searchParams = new URLSearchParams(window.location.search);
 redmetricsConnection = redmetrics.prepareWriteConnection({ 
   gameVersionId: RED_METRICS_GAME_VERSION,
   player: {
-    expId: url.searchParams.get("expId") || url.searchParams.get("expID"),
-    userId: url.searchParams.get("userId") || url.searchParams.get("userID"),
+    expId: searchParams.get("expId") || searchParams.get("expID"),
+    userId: searchParams.get("userId") || searchParams.get("userID"),
     userAgent: navigator.userAgent
   } 
 });

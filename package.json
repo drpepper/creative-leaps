@@ -1,0 +1,20 @@
+{
+  "name": "leaps-tablet",
+  "version": "1.0.0",
+  "description": "Install",
+  "main": "bundle.js",
+  "dependencies": {
+    "babel-polyfill": "^6.26.0",
+    "url-search-params-polyfill": "^2.0.2"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babelify": "^8.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
