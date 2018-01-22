@@ -1,27 +1,27 @@
-import "url-search-params-polyfill";
+import "./node_modules/url-search-params-polyfill/index.js";
 
 
-module.exports.makeSprite = function(name) { 
+export function makeSprite(name) { 
   return new PIXI.Sprite(app.loader.resources[name].texture);
 }
 
-module.exports.clamp = function(x, min, max) {
+export function clamp(x, min, max) {
   return Math.min(max, Math.max(min, x));
 }
 
-module.exports.distanceBetween = function(a, b) {
+export function distanceBetween(a, b) {
   let x = a.x - b.x;
   let y = a.y - b.y;
   return Math.sqrt(x*x + y*y);
 }
 
-module.exports.lerp = function(a, b, p) {
+export function lerp(a, b, p) {
   const x = b.x - a.x;
   const y = b.y - a.y;
   return new PIXI.Point(a.x + p * x, a.y + p * y);
 }
 
-module.exports.add = function(...points) {
+export function add(...points) {
   const r = new PIXI.Point();
   for(let p of points) {
     r.x += p.x;
@@ -30,7 +30,7 @@ module.exports.add = function(...points) {
   return r;
 }
 
-module.exports.subtract = function(...points) {
+export function subtract(...points) {
   const r = new PIXI.Point(points[0].x, points[0].y);
   for(let i = 1; i < points.length; i++) {
     r.x -= points[i].x;
@@ -39,23 +39,23 @@ module.exports.subtract = function(...points) {
   return r;
 }
 
-module.exports.multiply = function(a, p) {
+export function multiply(a, p) {
   return new PIXI.Point(a.x * p, a.y * p);
 }
 
-module.exports.divide = function(a, p) {
+export function divide(a, p) {
   return new PIXI.Point(a.x / p, a.y / p);
 }
 
-module.exports.floor = function(p) {
+export function floor(p) {
   return new PIXI.Point(Math.floor(p.x), Math.floor(p.y));
 }
 
-module.exports.round = function(p) {
+export function round(p) {
   return new PIXI.Point(Math.round(p.x), Math.round(p.y));
 }
 
-module.exports.min = function(...points) {
+export function min(...points) {
   const r = new PIXI.Point(Infinity, Infinity);
   for(let p of points) {
     r.x = Math.min(p.x, r.x);
@@ -64,7 +64,7 @@ module.exports.min = function(...points) {
   return r;
 }
 
-module.exports.max = function(...points) {
+export function max(...points) {
   const r = new PIXI.Point(-Infinity, -Infinity);
   for(let p of points) {
     r.x = Math.max(p.x, r.x);
@@ -73,19 +73,19 @@ module.exports.max = function(...points) {
   return r;
 }
 
-module.exports.average = function(...points) {
+export function average(...points) {
   var sum = new PIXI.Point();
-  for(let point of points) sum = module.exports.add(sum, point);
-  return module.exports.divide(sum, points.length);
+  for(let point of points) sum = add(sum, point);
+  return divide(sum, points.length);
 }
 
-module.exports.moveTowards = function(a, b, speed) {
-  const d = module.exports.distanceBetween(a, b);
-  return module.exports.lerp(a, b, module.exports.clamp(speed / d, 0, 1));
+export function moveTowards(a, b, speed) {
+  const d = distanceBetween(a, b);
+  return lerp(a, b, clamp(speed / d, 0, 1));
 }
 
 // Test containment using isEqual
-module.exports.contains = function(list, p) {
+export function contains(list, p) {
   for(let x of list) {
     if(_.isEqual(x, p)) return true;
   }
@@ -93,7 +93,7 @@ module.exports.contains = function(list, p) {
 } 
 
 // Test containment using isEqual
-module.exports.indexOf = function(list, p) {
+export function indexOf(list, p) {
   for(let i = 0; i < list.length; i++) {
     if(_.isEqual(list[i], p)) return i;
   }
@@ -101,11 +101,11 @@ module.exports.indexOf = function(list, p) {
 } 
 
 // Find unique elements using isEqual
-module.exports.uniq = function(array) {
+export function uniq(array) {
   let results = [];
   let seen = [];
   array.forEach((value, index) => {
-    if(!module.exports.contains(seen, value)) {
+    if(!contains(seen, value)) {
       seen.push(value)
       results.push(array[index])
     }
@@ -114,40 +114,40 @@ module.exports.uniq = function(array) {
 }
 
 // Like Underscore's method, but uses contains()
-module.exports.difference = function(array) {
+export function difference(array) {
   const rest = Array.prototype.concat.apply(Array.prototype, Array.prototype.slice.call(arguments, 1));
-  return _.filter(array, (value) => !module.exports.contains(rest, value));
+  return _.filter(array, (value) => !contains(rest, value));
 }
 
 // Uses contains()
-module.exports.removeFromArray = function(array, value) {
+export function removeFromArray(array, value) {
   let ret = [];
   for(let element of array) if(!_.isEqual(element, value)) ret.push(element);
   return ret;
 }
 
-module.exports.distance = function(a, b) {
+export function distance(a, b) {
   const x = a.x - b.x;
   const y = a.y - b.y;
   return Math.sqrt(x*x + y*y);
 }
 
-module.exports.cloneData = function(o) {
+export function cloneData(o) {
   return JSON.parse(JSON.stringify(o));
 } 
 
-module.exports.lerpColor = function(start, end, fraction) {
+export function lerpColor(start, end, fraction) {
   const r = ((end & 0xff0000) >> 16) - ((start & 0xff0000) >> 16);
   const g = ((end & 0x00ff00) >> 8) - ((start & 0x00ff00) >> 8);
   const b = (end & 0x0000ff) - (start & 0x0000ff);
   return start + ((r * fraction) << 16) + ((g * fraction) << 8) + b;
 }
 
-module.exports.cyclicLerpColor = function(start, end, fraction) {
-  return fraction < 0.5 ? module.exports.lerpColor(start, end, fraction / 0.5) : module.exports.lerpColor(end, start, (fraction - 0.5) / 0.5);
+export function cyclicLerpColor(start, end, fraction) {
+  return fraction < 0.5 ? lerpColor(start, end, fraction / 0.5) : lerpColor(end, start, (fraction - 0.5) / 0.5);
 }
 
-module.exports.resizeGame = function(app) {
+export function resizeGame(app) {
   const parentSize = new PIXI.Point(window.innerWidth, window.innerHeight);
   const scale = Math.min(parentSize.x / app.renderer.width, parentSize.y / app.renderer.height).toFixed(2);
 
@@ -160,37 +160,37 @@ module.exports.resizeGame = function(app) {
     `scale(${scale}) translate(${(remainingSpace.x / 2).toFixed(2)}px, ${(remainingSpace.y / 2).toFixed(2)}px)`;
 }
 
-module.exports.getStartingScene = function(defaultScene) {
+export function getStartingScene(defaultScene) {
   const searchParams = new URLSearchParams(window.location.search);
   return searchParams.get("scene") || defaultScene;
 }
 
-module.exports.provideNextScene = function(sceneTransitions, currentScene, requestedTransition) {
+export function provideNextScene(sceneTransitions, currentScene, requestedTransition) {
   if(currentScene in sceneTransitions) return sceneTransitions[currentScene];
 
   console.error("No transition from", currentScene, "with transition", requestedTransition);
   return null;
 }
 
-module.exports.centerContainer = function(container, centerPos) {
+export function centerContainer(container, centerPos) {
   const oldBlockPositions = container.children.map(c => c.position);
-  const minBlockPos = module.exports.min.apply(null, oldBlockPositions);
-  const maxBlockPos = module.exports.max.apply(null, oldBlockPositions);
-  const blockCenterPos = module.exports.average(minBlockPos, maxBlockPos);
-  const offset = module.exports.subtract(centerPos, blockCenterPos);
+  const minBlockPos = min.apply(null, oldBlockPositions);
+  const maxBlockPos = max.apply(null, oldBlockPositions);
+  const blockCenterPos = average(minBlockPos, maxBlockPos);
+  const offset = subtract(centerPos, blockCenterPos);
 
   container.position = offset;
 }
 
 
-module.exports.Entity = class extends PIXI.utils.EventEmitter {
+export class Entity extends PIXI.utils.EventEmitter {
   setup() {}
   update(timeSinceStart, timeScale) {}
   teardown() {}
   requestedTransition(timeSinceStart) { return null; } // Provide string transition name, such as "next"
 }
 
-module.exports.StateMachine = class extends module.exports.Entity {
+export class StateMachine extends Entity {
   constructor(states, transitions, startingState = "start", endingState = "end") {
     super();
 
@@ -242,7 +242,7 @@ module.exports.StateMachine = class extends module.exports.Entity {
   }
 }
 
-module.exports.ParallelEntities = class extends module.exports.Entity {
+export class ParallelEntities extends Entity {
   constructor() {
     super();
 

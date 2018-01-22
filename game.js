@@ -1,6 +1,6 @@
-import "babel-polyfill";
-const util = require("./util.js");
-import "url-search-params-polyfill";
+//import "babel-polyfill";
+import * as util from "./util.js";
+import "./node_modules/url-search-params-polyfill/index.js";
 
 
 const EPSILON = 0.001;
