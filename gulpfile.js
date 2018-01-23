@@ -44,7 +44,9 @@ function copyBuildAssets() {
   return gulp.src([
     './deps/*',
     './images/*',
-    './game.css'
+    './game.css',
+    './fonts/css/*',
+    './fonts/font/*',
   ], { base: '.'})
   .pipe(gulp.dest('build/'));
 };
@@ -64,7 +66,8 @@ function copyDistAssets() {
   return gulp.src([
     './build/images/*',
     './build/game.css',
-    './build/index.html'
+    './build/index.html',
+    './build/fonts/**',
   ], { base: './build'})
   .pipe(gulp.dest('dist/'));
 };

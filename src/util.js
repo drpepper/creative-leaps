@@ -147,9 +147,14 @@ export function cyclicLerpColor(start, end, fraction) {
   return fraction < 0.5 ? lerpColor(start, end, fraction / 0.5) : lerpColor(end, start, (fraction - 0.5) / 0.5);
 }
 
+export function toFixedFloor(x, decimalPlaces) {
+  const divider = Math.pow(10, decimalPlaces);
+  return (Math.floor(x * divider) / divider).toFixed(decimalPlaces);
+}
+
 export function resizeGame(app) {
   const parentSize = new PIXI.Point(window.innerWidth, window.innerHeight);
-  const scale = Math.min(parentSize.x / app.renderer.width, parentSize.y / app.renderer.height).toFixed(2);
+  const scale = toFixedFloor(Math.min(parentSize.x / app.renderer.width, parentSize.y / app.renderer.height), 2);
 
   const newSize = new PIXI.Point(scale * app.renderer.width, scale * app.renderer.height);
   const remainingSpace = new PIXI.Point(parentSize.x - newSize.x, parentSize.y - newSize.y);
@@ -181,6 +186,40 @@ export function centerContainer(container, centerPos) {
 
   container.position = offset;
 }
+
+export function supportsFullscreen(element) {
+  return !!(element.requestFullscreen 
+    || element.mozRequestFullScreen 
+    || element.webkitRequestFullscreen 
+    || element.msRequestFullscreen);
+}
+
+export function requestFullscreen(element) {
+  if(element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if(element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();
+  } else if(element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  } else if(element.msRequestFullscreen) {
+    element.msRequestFullscreen();
+  }
+}
+
+export function exitFullscreen() {
+  if(document.exitFullscreen) document.exitFullscreen();
+  else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+  else if(document.mozCancelFullScreen) document.mozCancelFullScreen();
+  else if(document.msExitFullscreen) document.msExitFullscreen();
+} 
+
+export function inFullscreen() {
+  return document.fullscreenElement 
+    || document.webkitFullscreenElement
+    || document.mozFullScreenElement
+    || document.msFullScreenElement;
+}
+
 
 
 export class Entity extends PIXI.utils.EventEmitter {
