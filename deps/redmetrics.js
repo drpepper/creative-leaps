@@ -146,10 +146,19 @@
             }
 
             function createPlayer() {
+                var playerInfo = writeConnection.options.player;
+
+                // Currently redmetrics requires customData to be encoded as a string
+                if(_.has(playerInfo, "customData")) {
+                    // Clone object to avoid modifying writeConnection.playerInfo
+                    playerInfo = _.clone(playerInfo);
+                    playerInfo.customData = JSON.stringify(playerInfo.customData);
+                }
+
                 return Q.xhr({
                     url: writeConnection.options.baseUrl + "/v1/player/",
                     method: "POST",
-                    data: JSON.stringify(writeConnection.options.player),
+                    data: JSON.stringify(playerInfo),
                     contentType: "application/json"
                 }).then(function(result) {
                     writeConnection.playerId = result.data.id;
@@ -226,7 +235,7 @@
             // If we're not yet connected, return immediately
             if(!writeConnection.connected) return Q(writeConnection.playerInfo); 
 
-            // Currently writeConnection requires customData to be encoded as a string
+            // Currently redmetrics requires customData to be encoded as a string
             if(_.has(playerInfo, "customData")) {
                 // Clone object to avoid modifying writeConnection.playerInfo
                 playerInfo = _.clone(playerInfo);

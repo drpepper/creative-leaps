@@ -114,8 +114,11 @@ class IntroScene extends util.Entity {
   setup() {
     document.getElementById("intro-gui").style.display = "block";
 
+    document.getElementById("user-provided-id").addEventListener("keyup", this.onSetUserProvidedId.bind(this));
+
     this.done = false;
-    document.getElementById("done-intro").addEventListener("click", e => this.done = true);
+    document.getElementById("done-intro").disabled = true;
+    document.getElementById("done-intro").addEventListener("click", this.onDone.bind(this));
   }
 
   teardown() {
@@ -123,6 +126,17 @@ class IntroScene extends util.Entity {
   }  
 
   requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
+
+  onSetUserProvidedId() {
+    document.getElementById("done-intro").disabled = (document.getElementById("user-provided-id").value.length === 0);
+  }
+
+  onDone() {
+    playerData.customData.userProvidedId = document.getElementById("user-provided-id").value;
+    redmetricsConnection.updatePlayer(playerData);
+
+    this.done = true;
+  }
 }
 
 
@@ -665,6 +679,7 @@ let currentSceneName;
 let sceneStartedAt = 0;
 
 
+
 const app = new PIXI.Application({
   width: 960,
   height: 540,
@@ -678,13 +693,19 @@ app.loader
 
 // Load RedMetrics
 const searchParams = new URLSearchParams(window.location.search);
-redmetricsConnection = redmetrics.prepareWriteConnection({ 
-  gameVersionId: RED_METRICS_GAME_VERSION,
-  player: {
+
+let playerData = {
+  externalId: searchParams.get("userId") || searchParams.get("userID"),
+  customData: {
     expId: searchParams.get("expId") || searchParams.get("expID"),
     userId: searchParams.get("userId") || searchParams.get("userID"),
     userAgent: navigator.userAgent
-  } 
+  }
+};
+
+redmetricsConnection = redmetrics.prepareWriteConnection({ 
+  gameVersionId: RED_METRICS_GAME_VERSION,
+  player: playerData
 });
 redmetricsConnection.connect().then(function() {
   console.log("Connected to the RedMetrics server");
