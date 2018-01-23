@@ -559,7 +559,7 @@ class GalleryScene extends util.Entity {
         pageContainer.visible = false;
         this.pages.addChild(pageContainer);
       }
-      const galleryShapeCenter = new PIXI.Point(70 + col * 90, 90 + row * 85);
+      const galleryShapeCenter = new PIXI.Point(70 + col * 90, 95 + row * 85);
 
       const galleryBg = new PIXI.Graphics();
       galleryBg.beginFill(0x333333);
@@ -755,6 +755,4 @@ window.addEventListener("resize", () => util.resizeGame(app));
 // for(let i = 0; i < 120; i++) {
 //   galleryShapes.push([{"x":1,"y":0},{"x":2,"y":0},{"x":3,"y":0},{"x":4,"y":0},{"x":5,"y":0},{"x":6,"y":0},{"x":7,"y":0},{"x":8,"y":0},{"x":9,"y":0},{"x":1,"y":-1}]);
 // }
-
-
 
