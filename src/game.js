@@ -148,6 +148,7 @@ class TrainingScene extends util.Entity {
     this.blockScene = new BlockScene(true);
     this.blockScene.setup();
 
+    this.blockScene.preventAddingShape = true;
     document.getElementById("add-shape").style.display = "none";
     document.getElementById("done-adding").style.display = "none";
 
@@ -191,6 +192,7 @@ class TrainingScene extends util.Entity {
     document.getElementById("training-3").style.display = "block";
 
     document.getElementById("add-shape").style.display = "block";
+    this.blockScene.preventAddingShape = false;
   }
 
   onAddedShape() {
@@ -210,6 +212,7 @@ class BlockScene extends util.Entity {
     this.targetBlockContainerPosition = new PIXI.Point();
     this.lastMouseUpTime = 0;
     this.draggingPointerId = null;
+    this.preventAddingShape = false;
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -243,7 +246,7 @@ class BlockScene extends util.Entity {
     galleryBg.drawRect(0, 0, 150, 150);
     galleryBg.endFill();
     galleryBg.position.set(800, 10);
-    galleryBg.on("click", this.onAddShape, this);
+    galleryBg.on("pointerdown", this.onAddShape, this);
     galleryBg.interactive = true;
     this.container.addChild(galleryBg);
 
@@ -466,6 +469,8 @@ class BlockScene extends util.Entity {
   }
 
   onAddShape() {
+    if(this.preventAddingShape) return;
+    
     const galleryShape = util.cloneData(this.blockGrid)
     galleryShapes.push(galleryShape);
     this.updateGalleryShape(galleryShape);
@@ -537,7 +542,7 @@ class GalleryScene extends util.Entity {
         pageContainer.visible = false;
         this.pages.addChild(pageContainer);
       }
-      const galleryShapeCenter = new PIXI.Point(70 + col * 90, 90 + row * 90);
+      const galleryShapeCenter = new PIXI.Point(70 + col * 90, 90 + row * 85);
 
       const galleryBg = new PIXI.Graphics();
       galleryBg.beginFill(0x333333);
