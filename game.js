@@ -192,6 +192,7 @@ class BlockScene extends util.Entity {
     this.highlightedBlocks = new Set();
     this.targetBlockContainerPosition = new PIXI.Point();
     this.lastMouseUpTime = 0;
+    this.draggingPointerId = null;
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -291,7 +292,11 @@ class BlockScene extends util.Entity {
   }
 
   onPointerDown(e) {
+    if(this.draggingBlock) return; // Don't allow multiple drags
+
+
     this.draggingBlock = e.currentTarget;
+    this.draggingPointerId = e.data.pointerId; // Keep track of which finger is used 
     this.draggingBlockStartGridPosition = pixelPosToGridPos(this.draggingBlock.position);
     this.startDragTime = Date.now();
 
@@ -312,6 +317,7 @@ class BlockScene extends util.Entity {
     this.unhighlightBlock(this.draggingBlock);
 
     this.draggingBlock = null;
+    this.draggingPointerId = null;
     this.updateBlocks();
 
     document.getElementById("add-shape").disabled = false;
@@ -321,6 +327,8 @@ class BlockScene extends util.Entity {
 
   onPointerMove(e) {
     if(!this.draggingBlock) return;
+    if(e.data.pointerId !== this.draggingPointerId) return;
+
 
     this.draggingBlock.position = util.subtract(e.data.getLocalPosition(app.stage), this.blocksContainer.position);
   }
