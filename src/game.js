@@ -226,6 +226,8 @@ class BlockScene extends util.Entity {
     galleryBg.drawRect(0, 0, 150, 150);
     galleryBg.endFill();
     galleryBg.position.set(800, 10);
+    galleryBg.on("click", this.onAddShape, this);
+    galleryBg.interactive = true;
     this.container.addChild(galleryBg);
 
     const galleryParent = new PIXI.Container();;
