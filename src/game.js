@@ -127,8 +127,13 @@ class IntroScene extends util.Entity {
 
   requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
 
-  onSetUserProvidedId() {
+  onSetUserProvidedId(e) {
     document.getElementById("done-intro").disabled = (document.getElementById("user-provided-id").value.length === 0);
+
+    // If enter key pressed
+    if(e.keyCode === 13 && !document.getElementById("done-intro").disabled) {
+      this.onDone();
+    } 
   }
 
   onDone() {
@@ -470,7 +475,7 @@ class BlockScene extends util.Entity {
 
   onAddShape() {
     if(this.preventAddingShape) return;
-    
+
     const galleryShape = util.cloneData(this.blockGrid)
     galleryShapes.push(galleryShape);
     this.updateGalleryShape(galleryShape);
