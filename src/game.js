@@ -164,8 +164,11 @@ class TrainingScene extends util.Entity {
   }
 
   teardown() {
-    document.getElementById("done-adding").style.display = "block";
+    this.blockScene.off("droppedBlock", this.onDroppedBlock, this);
+    this.blockScene.off("addedShape", this.onAddedShape, this);
     this.blockScene.teardown();
+
+    document.getElementById("done-adding").style.display = "block";
     document.getElementById("training-gui").style.display = "none";
   }
 
@@ -254,10 +257,16 @@ class BlockScene extends util.Entity {
 
     // HTML
     document.getElementById("blocks-gui").style.display = "block";
-    document.getElementById("add-shape").addEventListener("click", this.onAddShape.bind(this));
-    document.getElementById("done-adding").addEventListener("click", this.onAttemptDone.bind(this));
-    document.getElementById("modal-confirm-cancel-button").addEventListener("click", this.cancelModal.bind(this));
-    document.getElementById("modal-confirm-done-button").addEventListener("click", this.confirmDone.bind(this));
+
+    // This is dumb, but required so that removeEventListener works correctly with bind()
+    this.onAddShape = this.onAddShape.bind(this);
+    this.onAttemptDone = this.onAttemptDone.bind(this);
+    this.cancelModal = this.cancelModal.bind(this);
+    this.confirmDone = this.confirmDone.bind(this);
+    document.getElementById("add-shape").addEventListener("click", this.onAddShape);
+    document.getElementById("done-adding").addEventListener("click", this.onAttemptDone);
+    document.getElementById("modal-confirm-cancel-button").addEventListener("click", this.cancelModal);
+    document.getElementById("modal-confirm-done-button").addEventListener("click", this.confirmDone);
   }
 
   update(timeSinceStart) {
@@ -282,6 +291,11 @@ class BlockScene extends util.Entity {
   teardown() {
     sceneLayer.removeChild(this.container);
     document.getElementById("blocks-gui").style.display = "none";
+
+    document.getElementById("add-shape").removeEventListener("click", this.onAddShape);
+    document.getElementById("done-adding").removeEventListener("click", this.onAttemptDone);
+    document.getElementById("modal-confirm-cancel-button").removeEventListener("click", this.cancelModal);
+    document.getElementById("modal-confirm-done-button").removeEventListener("click", this.confirmDone);
   }
 
   requestedTransition(timeSinceStart) { return this.done ? "next" : null; }
