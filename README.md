@@ -1,13 +1,14 @@
 
 
-Install
+## Installing
 
+```
 npm install
-npm install -g browserify watchify uglify-js
+npm install -g gulp-cli
+```
 
+## Compiling
 
-To compile
+Use `gulp build` or `gulp watch` to compile.
 
-watchify game.js -o bundle.js -t [ babelify --presets [ env ] ]
-
-
+To generate minimized version, use `gulp dist`.

@@ -1,4 +1,4 @@
-import "./node_modules/url-search-params-polyfill/index.js";
+import "../node_modules/url-search-params-polyfill/index.js";
 
 
 export function makeSprite(name) { 
