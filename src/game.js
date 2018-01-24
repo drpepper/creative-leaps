@@ -672,6 +672,24 @@ class ResultsScene extends util.Entity {
 
     document.getElementById("code").innerText = redmetricsConnection.playerId ? 
       redmetricsConnection.playerId.substr(-8) : "Unknown";
+
+    // Setup followup link
+    if(searchParams.has("followupLink")) {
+      const expId = searchParams.get("expId") || searchParams.get("expID") || "";
+      const userId = searchParams.get("userId") || searchParams.get("userID") || "";
+      const metricsId = redmetricsConnection.playerId || "";
+      const userProvidedId = playerData.customData.userProvidedId || "";
+
+      var link = searchParams.get("followupLink");
+      if(!_.contains(link, "?")) link += "?";
+      link += "&IDExp=" + expId 
+        + "&IDUser=" + userId
+        + "&IDMetrics=" + metricsId
+        + "&IDUserProvided=" + userProvidedId;
+      document.getElementById("followup-link").href = link;
+    } else {
+      document.getElementById("followup-link-container").style.display = "none";
+    }
   }
 
   teardown() {
@@ -704,6 +722,7 @@ const metricsStartSceneEvents = {
   results: "startFeedback"
 };
 
+const searchParams = new URLSearchParams(window.location.search);
 
 let galleryShapes = [];
 let searchScore = 0.33;
@@ -713,8 +732,6 @@ let sceneLayer;
 let currentScene;
 let currentSceneName;
 let sceneStartedAt = 0;
-
-
 
 const app = new PIXI.Application({
   width: 960,
@@ -728,8 +745,6 @@ app.loader
   .load(setup);
 
 // Load RedMetrics
-const searchParams = new URLSearchParams(window.location.search);
-
 let playerData = {
   externalId: searchParams.get("userId") || searchParams.get("userID"),
   customData: {
