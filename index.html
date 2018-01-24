@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <title>Leaps for Tablet</title>
+  <meta name="viewport" content="width=device-width, user-scalable=no"/>
   <link href="game.css" rel="stylesheet">
+  <link href="fonts/css/fontello.css" rel="stylesheet">  
 </head>
 <body>
   <div id="game-parent">
@@ -14,8 +16,10 @@
         <div id="intro-gui">
           <h1>Welcome to the game of shifting shapes</h1>
           <p>Your goal is to discover interesting and beautiful shapes.</p>
-          <p>Please continue to start the training session of the game.</p>
-          <br><button id="done-intro">Continue</button>
+          <p>To continue, please enter the unique ID given to you.</p>
+          <br>
+          <p><input id="user-provided-id"></p>
+          <br><button id="done-intro">Continue</button></p>
         </div>
         <div id="training-gui">
           <h1>Training Session</h1>
@@ -97,12 +101,17 @@
             </p>
 
             <p><br>Your game ID is: <br><br><span class="code" id="code"></span></p>
+            
+            <p id="followup-link-container">To complete the experiment, <a id="followup-link" href="">please follow this link</a>.</p>
           </div>
 
         </div>
       </div>
 
-      <!-- <button id="fullscreen-button">Fullscreen</button> -->
+      <div id="fullscreen-button">
+        <i id="fullscreen-button-full" class="icon-resize-full"></i>
+        <i id="fullscreen-button-small" class="icon-resize-small"></i>
+      </div>
     </div>
   </div>
 
@@ -112,8 +121,6 @@
   <script src="deps/underscore.js"></script>
   <script src="deps/redmetrics.js"></script>
 
-  <!-- <script src="util.js"></script>
-  <script src="game.js"></script> -->
   <script src="bundle.js"></script>
-</body>
+  </body>
 </html>
