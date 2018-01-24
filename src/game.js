@@ -230,6 +230,7 @@ class BlockScene extends util.Entity {
     this.lastMouseUpTime = 0;
     this.draggingPointerId = null;
     this.preventAddingShape = false;
+    this.timesUp = false;
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -284,15 +285,25 @@ class BlockScene extends util.Entity {
     this.cancelModal = this.cancelModal.bind(this);
     this.confirmDone = this.confirmDone.bind(this);
     document.getElementById("add-shape").addEventListener("click", this.onAddShape);
-    document.getElementById("done-adding").addEventListener("click", this.onAttemptDone);
     document.getElementById("modal-confirm-cancel-button").addEventListener("click", this.cancelModal);
     document.getElementById("modal-confirm-done-button").addEventListener("click", this.confirmDone);
+
+    const doneAddingButton = document.getElementById("done-adding");
+    if(allowEarlyExit) {
+      doneAddingButton.addEventListener("click", this.onAttemptDone);
+    } else {
+      doneAddingButton.addEventListener("click", this.confirmDone);
+      doneAddingButton.disabled = true;
+    }
   }
 
   update(timeSinceStart) {
+    if(this.timesUp) return;
+
+
     if(timeSinceStart > MAX_SEARCH_TIME) {
-      this.confirmDone();
-      return;
+      this.timesUp = true;
+      document.getElementById("done-adding").disabled = false;
     }
 
     // Animate highlighted blocks
@@ -343,6 +354,7 @@ class BlockScene extends util.Entity {
 
   onPointerDown(e) {
     if(this.draggingBlock) return; // Don't allow multiple drags
+    if(this.timesUp) return; // Don't allow drags when time is up
 
 
     this.draggingBlock = e.currentTarget;
@@ -487,6 +499,8 @@ class BlockScene extends util.Entity {
 
   onAddShape() {
     if(this.preventAddingShape) return;
+    if(this.timesUp) return; // Don't allow adding shape when time is up
+
 
     const galleryShape = util.cloneData(this.blockGrid)
     galleryShapes.push(galleryShape);
@@ -723,6 +737,7 @@ const metricsStartSceneEvents = {
 };
 
 const searchParams = new URLSearchParams(window.location.search);
+const allowEarlyExit = searchParams.get("allowEarlyExit") !== "false" && searchParams.get("allowEarlyExit") !== "0";
 
 let galleryShapes = [];
 let searchScore = 0.33;
