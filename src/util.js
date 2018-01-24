@@ -161,8 +161,11 @@ export function resizeGame(app) {
 
   console.log("setting scale to", scale);
 
-  document.getElementById("game-container").style.transform = 
-    `scale(${scale}) translate(${(remainingSpace.x / 2).toFixed(2)}px, ${(remainingSpace.y / 2).toFixed(2)}px)`;
+  const css = `scale(${scale}) translate(${(remainingSpace.x / 2).toFixed(2)}px, ${(remainingSpace.y / 2).toFixed(2)}px)`;
+  const element = document.getElementById("game-container");
+  for(const prop of ["transform", "webkitTransform", "msTransform"]) {
+    document.getElementById("game-container").style[prop] = css;
+  }
 }
 
 export function getStartingScene(defaultScene) {
