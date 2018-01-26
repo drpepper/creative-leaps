@@ -308,7 +308,14 @@ class BlockScene extends util.Entity {
 
     if(timeSinceStart > MAX_SEARCH_TIME) {
       this.timesUp = true;
-      document.getElementById("done-adding").disabled = false;
+
+      if(galleryShapes.length < 5) {
+        document.getElementById("stuck-message").style.display = "block";
+        document.getElementById("add-shape").disabled = true;
+        document.getElementById("done-adding").disabled = true;
+      } else {
+        document.getElementById("done-adding").disabled = false;
+      }
     }
 
     // Animate highlighted blocks
