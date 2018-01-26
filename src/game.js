@@ -240,6 +240,17 @@ class BlockScene extends util.Entity {
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
 
+    const galleryBg = new PIXI.Graphics();
+    galleryBg.beginFill(0x808080);
+    galleryBg.lineColor = 0xffffff;
+    galleryBg.lineWidth = 1;
+    galleryBg.drawRect(0, 0, 150, 150);
+    galleryBg.endFill();
+    galleryBg.position.set(800, 10);
+    galleryBg.on("pointerdown", this.onAddShape, this);
+    galleryBg.interactive = true;
+    this.container.addChild(galleryBg);
+
     this.blocksContainer = new PIXI.Container();
     this.container.addChild(this.blocksContainer);
 
@@ -260,18 +271,6 @@ class BlockScene extends util.Entity {
     }
 
     this.updateBlocks();
-
-
-    const galleryBg = new PIXI.Graphics();
-    galleryBg.beginFill(0x808080);
-    galleryBg.lineColor = 0xffffff;
-    galleryBg.lineWidth = 1;
-    galleryBg.drawRect(0, 0, 150, 150);
-    galleryBg.endFill();
-    galleryBg.position.set(800, 10);
-    galleryBg.on("pointerdown", this.onAddShape, this);
-    galleryBg.interactive = true;
-    this.container.addChild(galleryBg);
 
     const galleryParent = new PIXI.Container();;
     galleryParent.position.set(875, 85);
@@ -374,6 +373,9 @@ class BlockScene extends util.Entity {
     this.blockGrid = util.removeFromArray(this.blockGrid, gridPos);
 
     this.highlightedBlocks.add(this.draggingBlock);
+
+    // Disable html buttons
+    document.getElementById("html-layer").className = "no-pointer-events";
   }
 
   onPointerUp(e) {
@@ -388,6 +390,9 @@ class BlockScene extends util.Entity {
     this.updateBlocks();
 
     document.getElementById("add-shape").disabled = false;
+
+    // Re-enable html buttons
+    document.getElementById("html-layer").className = "";
 
     this.emit("droppedBlock");
   }
