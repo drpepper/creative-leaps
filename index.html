@@ -13,104 +13,119 @@
       <canvas id="pixi-canvas"></canvas>
 
       <div id="html-layer">
-        <div id="intro-gui">
-          <h1>Welcome to the game of shifting shapes</h1>
-          <p>Your goal is to discover interesting and beautiful shapes.</p>
-          <p>To continue, please enter the unique ID given to you.</p>
-          <br>
-          <p><input id="user-provided-id"></p>
-          <br><button id="done-intro">Continue</button></p>
-        </div>
-        <div id="training-gui">
-          <h1>Training Session</h1>
-          <div id="training-1">
-            <p>Your goal is to explore the space of "shifting shapes" 
-              <br>and to discover shapes that you find interesting and beautiful.</p>
-            <p>The shapes are composed of connected squares.</p>
-            <div class="bottom-text">
-              <p>At each step you can move one square from the current shape to create a new shape.</p>
-              <p class="highlight">Drag the left-most or right-most square to a different place.</p>
+        <div id="sections">
+          <div id="intro-gui">
+            <h1>Welcome to the game of shifting shapes</h1>
+            <p>Your goal is to discover interesting and beautiful shapes.</p>
+            <p>To continue, please enter the unique ID given to you.</p>
+            <br>
+            <p><input id="user-provided-id"></p>
+            <br><button id="done-intro">Continue</button></p>
+          </div>
+          <div id="training-gui">
+            <h1>Training Session</h1>
+            <div id="training-1">
+              <p>In this game you are going to explore the space of “shifting shapes” 
+                <br>and make interesting and beautiful shapes. 
+              </p>
+              <p>To make these shapes you are going to be moving these green blocks on the screen.</p>
+              <div class="bottom-text">
+                <p class="highlight">Drag the left-most or right-most square to a different place.</p>
+                <br><button id="done-training-1" class="hidden">Next</button>
+              </div>
+            </div>
+            <div id="training-2" class="hidden">
+              <p>You can only move the blocks at the end or the edge of the shape</p>
+
+              ​<div class="bottom-text">
+                <p>but you can move as many blocks as you like
+                  <br>until you find a shape that is interesting and beautiful to you.​</p>
+                <br><button id="done-training-2">Got it</button>
+              </div> 
+            </div>
+            <div id="training-3" class="hidden">
+              <p>When you make a shape that you ​find interesting and beautiful​
+                <br>you can save it by clicking on the grey box
+                <br>or the “Collect Shape” button</p>
+              <div class="bottom-text">
+                <p class="highlight">Click there now</p>
+              </div>
+            </div>
+            <div id="training-4" class="hidden">
+              <p>When the game is over you will get to see all of the shapes 
+                <br>you have made and pick your 5 favorite shapes
+              </p>
+              <div class="bottom-text">
+                  <p>The game is 12 minutes long.
+                      <br>Please play alone, in a quiet surroundings with no interruptions.
+                      <br>
+                      <br>Thanks and enjoy the game!
+                  </p>
+                  <button id="done-training-4">Let's play</button>
+              </div>
             </div>
           </div>
-          <div id="training-2" class="hidden">
-            <p>Only squares that are at the edge of the shape are movable</p>
-            <br><button id="done-training-2">Got it</button>
+          <div id="blocks-gui">
+            <button id="add-shape">Collect Shape</button>
+            <br><button id="done-adding">End Game</button>
+
+            <p id="end-early-message" class="hidden">You need to collect at least 5 shapes to move to the next step</p>
+
+            <p id="stuck-message" class="vertical-align hidden">Ooops, time has run out!
+              <br>You need to collect at least 5 shapes to continue. 
+              <br>
+              <br>Please reload and try again</p>
+
+            <div id="modal-confirm-done" class="hidden">
+              <div id="modal-confirm-box">
+              <p>Are you sure you want to end now?</p>    
+              <button id="modal-confirm-cancel-button">Return to game</button>
+              <button id="modal-confirm-done-button">End game</button>
+              </div>
           </div>
-          <div id="training-3" class="hidden">
-            <p>You can do as many moves as you like.</p>
-            <div class="bottom-text">
-              <p>When you find a shape that you like you can collect it 
-                <br>to a 'Gallery Space' by clicking on the ‘Collect Shape’ button.</p>
-              <p class="highlight">Click there now</p>
-            </div>
           </div>
-          <div id="training-4" class="hidden">
-            <p>
-                At the last stage of the game you will see all the shapes 
-                <br>you have stored in the 'Gallery Space' and will be asked
-                <br>to choose among them.
-            </p>
-            <div class="bottom-text">
-                <p>
-                    The game is 12 minutes long.
-                    <br>Please play alone, in a quiet surroundings with no interruptions.
-                    <br>
-                    <br>Thanks and enjoy the game!
+          <div id="selection-gui">
+            <p id="gallery-instructions">Please choose the 5 most creative shapes you've collected</p>
+            <button id="done-selection">Done</button>
+            <button id="previous-page-button">Previous page</button>
+            <button id="next-page-button">Next page</button>
+          </div>
+          <div id="results-gui">
+            <div id="results-block">
+              <h1>Results</h1>
+              <div id="results-text" class="bottom-text">
+                <p id="rapid-search-text" class="hidden"> 
+                  Our study shows that creative search is a trade-off between novelty and value. 
+                  <br>Your playing method suggests that you are <span class="highlight"><span class="searchScorePercent highlight"></span>%</span> more inclined toward <span class="highlight">rapid and spreading</span>
+                  searches which result in higher visual novelty. 
+                  In this kind of search, players tend to move rapidly between shapes, creating many shapes which spread across many different visual categories. 
+                  This search strategy usually produces shapes that are more unique in our game.
                 </p>
-                <button id="done-training-4">Let's play</button>
-            </div>
-          </div>
-        </div>
-        <div id="blocks-gui">
-          <button id="add-shape">Collect Shape</button>
-          <br><button id="done-adding">End Game</button>
+                <p id="focused-search-text" class="hidden">
+                  Our study shows that creative search is a trade-off between novelty and value.
+                  <br>Your playing method suggests that you are <span class="highlight"><span class="searchScorePercent highlight"></span>%</span> inclined toward <span class="highlight">focused and thoughtful searches</span> which result in higher visual value. 
+                  In this kind of search, players tend to focus on each visual category they discover, collecting thoughtfully
+                  shapes at increasing visual consensus. 
+                  This search strategy usually produces shapes that carry more meaning in our game.
+                </p>
 
-          <p id="end-early-message" class="hidden">You need to collect at least 5 shapes to move to the next step</p>
-
-          <div id="modal-confirm-done" class="hidden">
-            <div id="modal-confirm-box">
-            <p>Are you sure you want to end now?</p>    
-            <button id="modal-confirm-cancel-button">Return to game</button>
-            <button id="modal-confirm-done-button">End game</button>
-            </div>
-        </div>
-        </div>
-        <div id="selection-gui">
-          <p id="gallery-instructions">Please choose the 5 most creative shapes you've collected</p>
-          <button id="done-selection">Done</button>
-          <button id="previous-page-button">Previous page</button>
-          <button id="next-page-button">Next page</button>
-        </div>
-        <div id="results-gui">
-          <h1>Results</h1>
-
-          <div class="bottom-text">
-            <p id="rapid-search-text" class="hidden"> 
-              Our study shows that creative search is a trade-off between novelty and value. 
-              <br>Your playing method suggests that you are <span class="highlight"><span class="searchScorePercent highlight"></span>%</span> more inclined toward <span class="highlight">rapid and spreading</span>
-              searches which result in higher visual novelty. 
-              In this kind of search, players tend to move rapidly between shapes, creating many shapes which spread across many different visual categories. 
-              This search strategy usually produces shapes that are more unique in our game.
-            </p>
-            <p id="focused-search-text" class="hidden">
-              Our study shows that creative search is a trade-off between novelty and value.
-              <br>Your playing method suggests that you are <span class="highlight"><span class="searchScorePercent highlight"></span>%</span> inclined toward <span class="highlight">focused and thoughtful searches</span> which result in higher visual value. 
-              In this kind of search, players tend to focus on each visual category they discover, collecting thoughtfully
-              shapes at increasing visual consensus. 
-              This search strategy usually produces shapes that carry more meaning in our game.
-            </p>
-
-            <p><br>Your game ID is: <br><br><span class="code" id="code"></span></p>
-            
-            <p id="followup-link-container">To complete the experiment, <a id="followup-link" href="">please follow this link</a>.</p>
+                <p><br>Your game ID is: <br><br><span class="code" id="code"></span></p>
+                
+                <p id="followup-link-container">To complete the experiment, <a id="followup-link" href="">please follow this link</a>.</p>
+              </div>
           </div>
 
+          <div id="thanks-block">
+            <h1 class="vertical-align">Thanks for playing!</h1>
+          </div>
         </div>
       </div>
 
       <div id="fullscreen-button">
         <i id="fullscreen-button-full" class="icon-resize-full"></i>
         <i id="fullscreen-button-small" class="icon-resize-small"></i>
+      </div>
+
       </div>
     </div>
   </div>

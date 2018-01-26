@@ -78,7 +78,11 @@ a {
   left: 0;  
 }
 
-#html-layer > * {
+#html-layer {
+  pointer-events: none;
+}
+
+#sections > * {
   display: none;
 
   position: absolute;
@@ -86,8 +90,6 @@ a {
   left: 0;
   width: 960px;
   height: 540px;
-
-  pointer-events: none;
 }
 
 #fullscreen-button {
@@ -97,8 +99,23 @@ a {
   font-size: 2em;
 }
 
-#html-layer input, button, label, a, select {
+#html-layer input, 
+#html-layer button, 
+#html-layer label, 
+#html-layer a, 
+#html-layer select,
+#html-layer #fullscreen-button {
   pointer-events: auto;
+}
+
+#html-layer.no-pointer-events input, 
+#html-layer.no-pointer-events button, 
+#html-layer.no-pointer-events label, 
+#html-layer.no-pointer-events a, 
+#html-layer.no-pointer-events select,
+#html-layer.no-pointer-events #fullscreen-button 
+{
+  pointer-events: none;
 }
 
 #add-shape {
@@ -132,8 +149,21 @@ a {
   width: 100%;
 }
 
+#done-training-1 {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .highlight {
   color: limegreen;
+}
+
+.vertical-align {
+    position: relative;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
 }
 
 .code {
@@ -194,4 +224,14 @@ a {
   position: absolute;
   bottom:10px;
   right: 40px;
+}
+
+#thanks-block {
+  height: 540px;
+}
+
+#stuck-message {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: orange;
+  font-size: xx-large;
 }
