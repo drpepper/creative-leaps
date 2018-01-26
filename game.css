@@ -132,6 +132,11 @@ a {
   width: 100%;
 }
 
+#done-training-1 {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .highlight {
   color: limegreen;
 }

@@ -173,6 +173,7 @@ class TrainingScene extends util.Entity {
     this.blockScene.on("addedShape", this.onAddedShape, this);
 
     document.getElementById("training-gui").style.display = "block";
+    document.getElementById("done-training-1").addEventListener("click", this.onDonePart1.bind(this));
     document.getElementById("done-training-2").addEventListener("click", this.onDonePart2.bind(this));
     document.getElementById("done-training-4").addEventListener("click", e => this.done = true);
   }
@@ -196,10 +197,14 @@ class TrainingScene extends util.Entity {
     if(this.didDropBlock) return;
 
     this.didDropBlock = true;
+    this.blockScene.highlightMovableBlocks();
+
+    document.getElementById("done-training-1").style.display = "block";
+  }
+
+  onDonePart1() {
     document.getElementById("training-1").style.display = "none";
     document.getElementById("training-2").style.display = "block";
-
-    this.blockScene.highlightMovableBlocks();
   }
 
   onDonePart2() {
