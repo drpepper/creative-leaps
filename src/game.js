@@ -236,6 +236,7 @@ class BlockScene extends util.Entity {
     this.draggingPointerId = null;
     this.preventAddingShape = false;
     this.timesUp = false;
+    this.changedShape = true;
 
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
@@ -390,6 +391,7 @@ class BlockScene extends util.Entity {
     this.updateBlocks();
 
     document.getElementById("add-shape").disabled = false;
+    this.changedShape = true;
 
     // Re-enable html buttons
     document.getElementById("html-layer").className = "";
@@ -510,6 +512,7 @@ class BlockScene extends util.Entity {
   onAddShape() {
     if(this.preventAddingShape) return;
     if(this.timesUp) return; // Don't allow adding shape when time is up
+    if(!this.changedShape) return;
 
 
     const galleryShape = util.cloneData(this.blockGrid)
@@ -518,6 +521,7 @@ class BlockScene extends util.Entity {
 
     document.getElementById("end-early-message").style.display = "none";
     document.getElementById("add-shape").disabled = true;
+    this.changedShape = false;
 
     redmetricsConnection.postEvent({
       type: "added shape to gallery",
