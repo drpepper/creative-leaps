@@ -676,47 +676,54 @@ class ResultsScene extends util.Entity {
     this.container = new PIXI.Container();
     sceneLayer.addChild(this.container);
 
-    const slider = new PIXI.Sprite(app.loader.resources["images/slider.png"].texture);
-    slider.anchor.set(0.5);
-    slider.position.set(app.renderer.width / 2, 145);
-    this.container.addChild(slider);
-
-    const ball = new PIXI.Graphics();
-    ball.beginFill(0x2CC62C);
-    ball.drawCircle(app.renderer.width / 2 + searchScore * 255, 120, 10);
-    this.container.addChild(ball);
-
     document.getElementById("results-gui").style.display = "block";
-    if(searchScore > 0) {
-      document.getElementById("rapid-search-text").style.display = "block";
+
+    if(!showResults) {
+      document.getElementById("results-block").style.display = "none";
     } else {
-      document.getElementById("focused-search-text").style.display = "block";
-    }
+      document.getElementById("thanks-block").style.display = "none";
 
-    const searchScorePercent = Math.round(Math.abs(searchScore) * 100);
-    for(let el of document.getElementsByClassName("searchScorePercent")) {
-      el.innerText = searchScorePercent;
-    }
+      const slider = new PIXI.Sprite(app.loader.resources["images/slider.png"].texture);
+      slider.anchor.set(0.5);
+      slider.position.set(app.renderer.width / 2, 145);
+      this.container.addChild(slider);
 
-    document.getElementById("code").innerText = redmetricsConnection.playerId ? 
-      redmetricsConnection.playerId.substr(-8) : "Unknown";
+      const ball = new PIXI.Graphics();
+      ball.beginFill(0x2CC62C);
+      ball.drawCircle(app.renderer.width / 2 + searchScore * 255, 120, 10);
+      this.container.addChild(ball);
 
-    // Setup followup link
-    if(searchParams.has("followupLink")) {
-      const expId = searchParams.get("expId") || searchParams.get("expID") || "";
-      const userId = searchParams.get("userId") || searchParams.get("userID") || "";
-      const metricsId = redmetricsConnection.playerId || "";
-      const userProvidedId = playerData.customData.userProvidedId || "";
+      if(searchScore > 0) {
+        document.getElementById("rapid-search-text").style.display = "block";
+      } else {
+        document.getElementById("focused-search-text").style.display = "block";
+      }
 
-      var link = searchParams.get("followupLink");
-      if(!_.contains(link, "?")) link += "?";
-      link += "&IDExp=" + expId 
-        + "&IDUser=" + userId
-        + "&IDMetrics=" + metricsId
-        + "&IDUserProvided=" + userProvidedId;
-      document.getElementById("followup-link").href = link;
-    } else {
-      document.getElementById("followup-link-container").style.display = "none";
+      const searchScorePercent = Math.round(Math.abs(searchScore) * 100);
+      for(let el of document.getElementsByClassName("searchScorePercent")) {
+        el.innerText = searchScorePercent;
+      }
+
+      document.getElementById("code").innerText = redmetricsConnection.playerId ? 
+        redmetricsConnection.playerId.substr(-8) : "Unknown";
+
+      // Setup followup link
+      if(searchParams.has("followupLink")) {
+        const expId = searchParams.get("expId") || searchParams.get("expID") || "";
+        const userId = searchParams.get("userId") || searchParams.get("userID") || "";
+        const metricsId = redmetricsConnection.playerId || "";
+        const userProvidedId = playerData.customData.userProvidedId || "";
+
+        var link = searchParams.get("followupLink");
+        if(!_.contains(link, "?")) link += "?";
+        link += "&IDExp=" + expId 
+          + "&IDUser=" + userId
+          + "&IDMetrics=" + metricsId
+          + "&IDUserProvided=" + userProvidedId;
+        document.getElementById("followup-link").href = link;
+      } else {
+        document.getElementById("followup-link-container").style.display = "none";
+      }
     }
   }
 
@@ -752,6 +759,7 @@ const metricsStartSceneEvents = {
 
 const searchParams = new URLSearchParams(window.location.search);
 const allowEarlyExit = searchParams.get("allowEarlyExit") !== "false" && searchParams.get("allowEarlyExit") !== "0";
+const showResults = searchParams.get("showResults") !== "false" && searchParams.get("showResults") !== "0";
 
 let galleryShapes = [];
 let searchScore = 0.33;

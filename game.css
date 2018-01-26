@@ -158,6 +158,14 @@ a {
   color: limegreen;
 }
 
+.vertical-align {
+    position: relative;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
 .code {
   font-size: 2em;
   text-align: center;
@@ -216,4 +224,8 @@ a {
   position: absolute;
   bottom:10px;
   right: 40px;
+}
+
+#thanks-block {
+  height: 540px;
 }
