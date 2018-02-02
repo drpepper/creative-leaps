@@ -2,7 +2,7 @@
   "name": "leaps-tablet",
   "version": "1.0.0",
   "description": "",
-  "main": "bundle.js",
+  "main": "",
   "dependencies": {
     "babel-core": "^6.26.0",
     "babel-plugin-external-helpers": "^6.22.0",
