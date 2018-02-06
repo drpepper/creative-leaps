@@ -781,7 +781,8 @@ let sceneStartedAt = 0;
 const app = new PIXI.Application({
   width: 960,
   height: 540,
-  view: document.getElementById("pixi-canvas")
+  view: document.getElementById("pixi-canvas"),
+  antialias: true
 });
 
 app.loader
