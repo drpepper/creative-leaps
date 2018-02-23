@@ -623,7 +623,7 @@ class GalleryScene extends util.Entity {
 
     // HTML
     document.getElementById("selection-gui").style.display = "block";
-    document.getElementById("done-selection").addEventListener("click", e => this.done = true);
+    document.getElementById("done-selection").addEventListener("click", this.onDoneSelection.bind(this));
     document.getElementById("previous-page-button").addEventListener("click", e => this.changePage(this.pageNumber - 1));
     document.getElementById("next-page-button").addEventListener("click", e => this.changePage(this.pageNumber + 1));
 
@@ -676,6 +676,20 @@ class GalleryScene extends util.Entity {
     this.pages.children[this.pageNumber].visible = true;
     document.getElementById("previous-page-button").disabled = this.pageNumber == 0;
     document.getElementById("next-page-button").disabled = this.pageNumber == (this.pages.children.length - 1);
+  }
+
+  onDoneSelection() {
+    const selectedShapes = this.selectedIndexes.map(index => convertShapeToArray(galleryShapes[index]));
+
+    redmetricsConnection.postEvent({
+      type: "done selection",
+      customData: {
+        shapeIndices: this.selectedIndexes,
+        shapes: selectedShapes
+      }
+    });
+
+    this.done = true;
   }
 }
 
