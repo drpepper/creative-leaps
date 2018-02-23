@@ -518,6 +518,7 @@ class BlockScene extends util.Entity {
     if(this.preventAddingShape) return;
     if(this.timesUp) return; // Don't allow adding shape when time is up
     if(!this.changedShape) return;
+    if(this.draggingBlock) return; // Can't add shape while dragging
 
 
     const galleryShape = util.cloneData(this.blockGrid)
