@@ -1,4 +1,4 @@
-//import "babel-polyfill";
+import "../node_modules/babel-polyfill/dist/polyfill.js";
 import * as util from "./util.js";
 import "../node_modules/url-search-params-polyfill/index.js";
 
