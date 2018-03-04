@@ -679,7 +679,7 @@ class GalleryScene extends util.Entity {
   }
 
   onDoneSelection() {
-    const selectedShapes = this.selectedIndexes.map(index => convertShapeToArray(galleryShapes[index]));
+    const selectedShapes = _.map(this.selectedIndexes, index => convertShapeToArray(galleryShapes[index]));
 
     redmetricsConnection.postEvent({
       type: "done selection",
