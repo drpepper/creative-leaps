@@ -64,6 +64,9 @@ a {
   text-align: center;
 
   user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
 }
 
 #html-layer {
