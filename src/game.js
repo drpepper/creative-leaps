@@ -10,7 +10,7 @@ const BLOCK_COLOR = 0x81e700;
 const HIGHLIGHTED_BLOCK_COLOR = 0x59853b;
 const DRAG_HIGHLIGHT_PERIOD = 500;
 const RED_METRICS_HOST = "api.creativeforagingtask.com";
-const RED_METRICS_GAME_VERSION = "0b0986f3-9119-4d90-82fb-20ee4842da69";
+const RED_METRICS_GAME_VERSION = "7f8d4b44-2903-4b05-b019-0499d4ed0149";
 
 
 function gridPosToPixelPos(gridPos) {
@@ -784,6 +784,7 @@ const metricsStartSceneEvents = {
 const searchParams = new URLSearchParams(window.location.search);
 const allowEarlyExit = searchParams.get("allowEarlyExit") !== "false" && searchParams.get("allowEarlyExit") !== "0";
 const showResults = searchParams.get("showResults") !== "false" && searchParams.get("showResults") !== "0";
+const gameVersion = searchParams.get("gameVersion") || RED_METRICS_GAME_VERSION;
 
 let galleryShapes = [];
 let searchScore = 0.33;
@@ -818,7 +819,7 @@ let playerData = {
 
 redmetricsConnection = redmetrics.prepareWriteConnection({ 
   host: RED_METRICS_HOST,
-  gameVersionId: RED_METRICS_GAME_VERSION,
+  gameVersionId: gameVersion,
   player: playerData
 });
 redmetricsConnection.connect().then(function() {
