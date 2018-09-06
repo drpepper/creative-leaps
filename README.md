@@ -2,7 +2,7 @@
 
 A port of the "Creative Leaps" game to study creativity, ported from RedWire to an optimized version using Pixi.js. 
 
-Programmed by Jesse Himmelestein, supported by Allyson Mackey and Jasmine Forde from the University of Pennsylvania, and Yuval Hart from Harvard University.
+Programmed by Jesse Himmelstein, supported by Allyson Mackey and Jasmine Forde from the University of Pennsylvania, and Yuval Hart from Harvard University.
 
 
 ## Architecture
