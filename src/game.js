@@ -1,6 +1,8 @@
 import "../node_modules/babel-polyfill/dist/polyfill.js";
-import * as util from "./util.js";
 import "../node_modules/url-search-params-polyfill/index.js";
+
+import * as util from "./util.js";
+import * as rm2 from "../node_modules/redmetrics2.js/dist/esm/index.js";
 
 
 const EPSILON = 0.001;
@@ -12,6 +14,9 @@ const DRAG_HIGHLIGHT_PERIOD = 500;
 const RED_METRICS_HOST = "api.creativeforagingtask.com";
 const RED_METRICS_GAME_VERSION = "7f8d4b44-2903-4b05-b019-0499d4ed0149";
 
+
+const writeConnection = rm2.connect();
+console.log("got writeConnection", writeConnection);
 
 function gridPosToPixelPos(gridPos) {
   return util.multiply(gridPos, BLOCK_WIDTH);
