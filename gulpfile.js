@@ -1,7 +1,7 @@
 const gulp = require('gulp');
 const htmlreplace = require('gulp-html-replace');
 const rollup = require('rollup');
-const resolve = require('rollup-plugin-node-resolve');
+const { nodeResolve } = require('@rollup/plugin-node-resolve');
 const babel = require('rollup-plugin-babel');
 const del = require('del');
 const uglify = require('gulp-uglify');
@@ -17,7 +17,7 @@ async function bundle() {
   const bundle = await rollup.rollup({
     input: 'src/game.js',
     plugins: [
-      resolve(),
+      nodeResolve(),
       babel({
         exclude: 'node_modules/**' // only transpile our source code
       })
@@ -76,7 +76,7 @@ exports.copyDistAssets = copyDistAssets;
 function watchFiles() {
   gulp.watch('src/*', bundle);
   gulp.watch('index.html', writeHtml);
-  gulp.watch(['images/*', 'deps/*', '*.css'], copyBuildAssets);
+  return gulp.watch(['images/*', 'deps/*', '*.css'], copyBuildAssets);
 };
 exports.watchFiles = watchFiles;
 

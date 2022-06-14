@@ -2,7 +2,6 @@ import "../node_modules/babel-polyfill/dist/polyfill.js";
 import "../node_modules/url-search-params-polyfill/index.js";
 
 import * as util from "./util.js";
-import * as rm2 from "../node_modules/redmetrics2.js/dist/esm/index.js";
 
 
 const EPSILON = 0.001;
@@ -11,12 +10,11 @@ const MAX_SEARCH_TIME = 12 * 60 * 1000;
 const BLOCK_COLOR = 0x81e700;
 const HIGHLIGHTED_BLOCK_COLOR = 0x59853b;
 const DRAG_HIGHLIGHT_PERIOD = 500;
-const RED_METRICS_HOST = "api.creativeforagingtask.com";
-const RED_METRICS_GAME_VERSION = "7f8d4b44-2903-4b05-b019-0499d4ed0149";
+// const RED_METRICS_HOST = "api.creativeforagingtask.com";
+// const RED_METRICS_GAME_VERSION = "7f8d4b44-2903-4b05-b019-0499d4ed0149";
+const RED_METRICS_HOST = "localhost";
+const RED_METRICS_API_KEY = "390a0522-1cd5-4d7f-a7b2-94c8e19fd790";
 
-
-const writeConnection = rm2.connect();
-console.log("got writeConnection", writeConnection);
 
 function gridPosToPixelPos(gridPos) {
   return util.multiply(gridPos, BLOCK_WIDTH);
@@ -156,7 +154,7 @@ class IntroScene extends util.Entity {
 
   onDone() {
     playerData.customData.userProvidedId = document.getElementById("user-provided-id").value;
-    redmetricsConnection.updatePlayer(playerData);
+    redmetricsConnection.updateSession(playerData);
 
     this.done = true;
   }
@@ -733,8 +731,8 @@ class ResultsScene extends util.Entity {
         el.innerText = searchScorePercent;
       }
 
-      document.getElementById("code").innerText = redmetricsConnection.playerId ? 
-        redmetricsConnection.playerId.substr(-8) : "Unknown";
+      document.getElementById("code").innerText = redmetricsConnection.sessionId ? 
+        redmetricsConnection.sessionId.substr(-8) : "Unknown";
 
       // Setup followup link
       if(searchParams.has("followupLink")) {
@@ -789,7 +787,7 @@ const metricsStartSceneEvents = {
 const searchParams = new URLSearchParams(window.location.search);
 const allowEarlyExit = searchParams.get("allowEarlyExit") !== "false" && searchParams.get("allowEarlyExit") !== "0";
 const showResults = searchParams.get("showResults") !== "false" && searchParams.get("showResults") !== "0";
-const gameVersion = searchParams.get("gameVersion") || RED_METRICS_GAME_VERSION;
+const apiKey = searchParams.get("apiKey") || RED_METRICS_API_KEY;
 
 let galleryShapes = [];
 let searchScore = 0.33;
@@ -822,10 +820,10 @@ let playerData = {
   }
 };
 
-redmetricsConnection = redmetrics.prepareWriteConnection({ 
+redmetricsConnection = new rm2.WriteConnection({ 
   host: RED_METRICS_HOST,
-  gameVersionId: gameVersion,
-  player: playerData
+  apiKey: apiKey,
+  session: playerData
 });
 redmetricsConnection.connect().then(function() {
   console.log("Connected to the RedMetrics server");
